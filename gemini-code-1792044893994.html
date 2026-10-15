@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mostly2stroke - Registration Dashboard</title>
+  
+  <link rel="icon" type="image/png" href="https://via.placeholder.com/32/FFD700/000000?text=M2S">
+  <!-- Library html2canvas untuk fitur Download / Save ID Card -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --m2s-yellow: #e5ff00;
+      --m2s-green: #28a745;
+      --m2s-red: #ff1744;
+      --text-main: #ffffff;
+      --text-muted: #a0a0a0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: linear-gradient(rgba(15, 15, 15, 0.93), rgba(15, 15, 15, 0.93)), url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1350&q=80');
+      background-size: cover; background-position: center; background-attachment: fixed;
+      color: var(--text-main); min-height: 100vh; display: flex;
+    }
+
+    /* Sidebar Navigasi */
+    .sidebar {
+      width: 270px; background-color: rgba(20, 20, 20, 0.95); border-right: 1px solid #333;
+      display: flex; flex-direction: column; padding: 20px 15px; flex-shrink: 0;
+    }
+    .brand-logo { font-size: 28px; font-weight: 900; color: var(--m2s-yellow); font-style: italic; margin-bottom: 30px; text-transform: uppercase; letter-spacing: -1px; line-height: 1; padding-left: 10px; }
+    .nav-menu { list-style: none; }
+    .nav-item {
+      padding: 12px 15px; border-radius: 6px; margin-bottom: 5px; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 12px; transition: 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background-color: rgba(229, 255, 0, 0.1); color: var(--m2s-yellow); border-left: 4px solid var(--m2s-yellow); }
+
+    /* Kelas untuk menyembunyikan menu yang belum dibutuhkan */
+    .menu-hidden { display: none !important; }
+
+    /* Main Area */
+    .main-content { flex: 1; padding: 25px; overflow-x: hidden; }
+    
+    /* Header Bar dengan 3 Kolom Tetap */
+    .header-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-bottom: 20px; gap: 20px; }
+    .header-title { font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; justify-self: start; }
+    
+    /* Widget Jam Real-time Dikunci di Tengah */
+    .realtime-clock-box {
+      background: rgba(18, 18, 18, 0.95); border: 2px solid #444; border-left: 5px solid var(--m2s-yellow);
+      padding: 6px 18px; border-radius: 8px; display: flex; align-items: center; gap: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5); justify-self: center;
+    }
+    .clock-time { 
+      font-size: 24px; font-weight: 900; color: var(--m2s-yellow); letter-spacing: 2px; 
+      font-family: 'Courier New', Courier, monospace; text-shadow: 0 0 8px rgba(229, 255, 0, 0.3);
+    }
+    .clock-date { 
+      font-size: 11px; font-weight: bold; color: var(--text-muted); 
+      border-left: 1px solid #555; padding-left: 10px; text-transform: uppercase; line-height: 1.3; white-space: nowrap;
+    }
+
+    .stats-container { display: flex; gap: 15px; background: rgba(30,30,30,0.8); padding: 10px 20px; border-radius: 8px; justify-self: end; }
+    .stat-box { font-size: 13px; font-weight: bold; color: var(--text-muted); }
+    .stat-val { font-size: 16px; font-weight: 900; color: white; }
+    .stat-val.green { color: var(--m2s-green); }
+
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+
+    .search-box {
+      width: 100%; padding: 14px 20px; background: rgba(30,30,30,0.9); border: 1px solid #444; border-radius: 8px; color: white; font-size: 15px; margin-bottom: 15px;
+    }
+    .search-box:focus { outline: none; border-color: var(--m2s-yellow); }
+
+    /* Filter Bar */
+    .filter-bar { display: flex; gap: 12px; margin-bottom: 15px; }
+    .filter-bar input { flex: 1; margin-bottom: 0; }
+    .filter-select {
+      padding: 0 15px; background: rgba(30,30,30,0.9); border: 1px solid #444; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; outline: none; font-weight: 600;
+    }
+    .filter-select:focus { border-color: var(--m2s-yellow); }
+
+    .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .scrollable-list { max-height: 65vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
+    .scrollable-list::-webkit-scrollbar { width: 6px; }
+    .scrollable-list::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    .scrollable-list::-webkit-scrollbar-track { background: #222; }
+
+    .rider-card {
+      background: #1a1c1e; border: 1px solid #333; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+    }
+    .rider-card:hover { border-color: #555; }
+    
+    /* Panel Live History */
+    .recent-panel { background: #151618; border: 1px solid #333; border-radius: 8px; padding: 15px; height: calc(65vh + 15px); display: flex; flex-direction: column; }
+    .recent-scroll-container { flex: 1; overflow-y: auto; padding-right: 2px; }
+    .recent-scroll-container::-webkit-scrollbar { width: 4px; }
+    .recent-scroll-container::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+    
+    .recent-item { padding: 12px 10px; border-bottom: 1px solid #2a2a2a; }
+    .recent-item:last-child { border-bottom: none; }
+
+    .table-container { background: rgba(25, 25, 25, 0.85); border-radius: 10px; overflow-x: auto; border: 1px solid #333; max-height: 60vh; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; font-size: 13px; }
+    th { background: #1a1a1a; color: var(--text-muted); padding: 12px 15px; border-bottom: 1px solid #333; font-weight: 600; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; z-index: 10; }
+    td { padding: 12px 15px; border-bottom: 1px solid #222; }
+    tr.hadir-row { background-color: rgba(40, 167, 69, 0.1); }
+    
+    .btn-detail { padding: 8px 16px; background: #222; color: white; border: 1px solid #555; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    .btn-detail:hover { background: #333; }
+
+    /* Style untuk Modul Status Kamar */
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      max-height: 68vh;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    .room-grid::-webkit-scrollbar { width: 6px; }
+    .room-grid::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    
+    .room-card {
+      background: #1a1c1e; border: 1px solid #333; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .room-header {
+      display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px;
+    }
+    .room-number { font-size: 16px; font-weight: 900; color: var(--m2s-yellow); }
+    .room-badge { font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+    .room-occupant-list { display: flex; flex-direction: column; gap: 6px; }
+    .room-occupant {
+      font-size: 13px; display: flex; justify-content: space-between; align-items: center; background: #222; padding: 6px 10px; border-radius: 4px;
+    }
+
+    /* Preview Kartu ID di Menu Cetak */
+    .cetak-row-card {
+      background: #1a1c1e; border: 1px solid #333; border-radius: 8px; padding: 15px;
+      display: flex; justify-content: space-between; align-items: center; gap: 20px;
+    }
+    .id-card-preview-box {
+      width: 220px; height: 135px; background: #ffffff; color: #000; border-radius: 6px; padding: 8px;
+      display: flex; flex-direction: column; justify-content: space-between; font-family: Arial, sans-serif; box-shadow: 0 4px 10px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+
+    /* POP-UP 1: DETAIL & QR CODE */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.88); display: none; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .modal-new-card {
+      background: #141518; width: 90%; max-width: 650px; border-radius: 8px;
+      border: 1px solid #333; box-shadow: 0 15px 35px rgba(0,0,0,0.7); display: flex; flex-direction: row; overflow: hidden;
+    }
+    .modal-left { flex: 1; padding: 25px; border-right: 1px solid #2a2a2a; }
+    .modal-right { width: 260px; padding: 25px; background: #191b1f; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    
+    .detail-table { width: 100%; border-collapse: collapse; }
+    .detail-table td { padding: 6px 0; border: none; font-size: 13px; }
+    .detail-label { color: #888; width: 100px; }
+    .detail-value { color: white; font-weight: 500; }
+
+    .btn-popup-checkin {
+      width: 100%; padding: 14px; background: var(--m2s-green); border: none; color: white;
+      font-weight: 900; font-size: 13px; border-radius: 4px; cursor: pointer; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .btn-popup-checkin:hover { background: #008a00; }
+
+    /* POP-UP 2: KONFIRMASI AKHIR */
+    .modal-confirm-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9); display: none; justify-content: center; align-items: center; z-index: 1100;
+    }
+    .modal-confirm-card {
+      background: #181818; width: 90%; max-width: 480px; border-radius: 10px; padding: 25px;
+      border: 1px solid #333; box-shadow: 0 15px 35px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 15px;
+    }
+    .modal-banner-green { background: var(--m2s-green); color: white; font-weight: 900; font-size: 20px; padding: 12px; border-radius: 6px; text-align: center; text-transform: uppercase; }
+    .rider-info-block { text-align: center; }
+    .rider-name-modal { font-size: 28px; font-weight: 900; color: var(--m2s-yellow); margin-bottom: 5px; text-transform: uppercase; }
+    .rider-detail { font-size: 13px; font-weight: 600; color: white; line-height: 1.4; text-transform: uppercase; }
+    .modal-banner-yellow { background: #ffbc00; color: black; padding: 12px; border-radius: 6px; text-align: center; }
+    .modal-kamar-title { font-size: 24px; font-weight: 900; margin-bottom: 3px; }
+    .modal-partner { font-size: 13px; font-weight: 800; }
+    .input-group input {
+      width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: white; border-radius: 6px; font-weight: bold; text-align: center; font-size: 13px;
+    }
+    .checkbox-group { display: flex; align-items: center; gap: 10px; }
+    .checkbox-group input { width: 18px; height: 18px; accent-color: var(--m2s-green); cursor: pointer; }
+    .checkbox-group label { font-size: 13px; font-weight: bold; color: white; cursor: default; }
+    .btn-submit { width: 100%; padding: 14px; background: var(--m2s-green); border: none; color: white; font-weight: 900; font-size: 15px; border-radius: 6px; cursor: pointer; text-transform: uppercase; }
+    .btn-cancel { width: 100%; padding: 8px; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar Navigasi -->
+  <div class="sidebar">
+    <div class="brand-logo">Mostly<br>2stroke</div>
+    <ul class="nav-menu">
+      <li class="nav-item active" onclick="switchTab('dashboard', this)">🏁 Dashboard & Scan</li>
+      <li class="nav-item" onclick="switchTab('riders', this)">👥 Data Riders (Master)</li>
+      <li class="nav-item" onclick="switchTab('kamar', this)">🛏️ Status Kamar (Grid)</li>
+      <li class="nav-item menu-hidden" onclick="switchTab('scrut', this)">🏍️ Scrutineering</li>
+      <li class="nav-item menu-hidden" onclick="switchTab('merch', this)">🎁 Merchandise</li>
+      <li class="nav-item" onclick="switchTab('cetak', this)">🖨️ Cetak ID & QR</li>
+      <li class="nav-item menu-hidden" onclick="switchTab('stats', this)">📈 Laporan & Statistik</li>
+      <li class="nav-item menu-hidden" onclick="switchTab('pengaturan', this)">⚙️ Pengaturan</li>
+      <li class="nav-item" onclick="switchTab('keluar', this)">🚪 Keluar</li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header-bar">
+      <!-- Kiri: Judul Halaman -->
+      <div class="header-title" id="pageTitle">REGISTRATION DASHBOARD</div>
+      
+      <!-- Tengah: Widget Jam Realtime (Dikunci di Tengah secara Presisi) -->
+      <div class="realtime-clock-box">
+        <span id="liveClock" class="clock-time">00:00:00</span>
+        <span id="liveDate" class="clock-date">Memuat...</span>
+      </div>
+      
+      <!-- Kanan: Statistik Total -->
+      <div class="stats-container">
+        <div class="stat-box">TOTAL: <span class="stat-val" id="totalRiders">0</span></div>
+        <div class="stat-box">BELUM: <span class="stat-val" id="totalBelum" style="color: var(--m2s-red);">0</span></div>
+        <div class="stat-box">HADIR: <span class="stat-val green" id="totalHadir">0</span></div>
+      </div>
+    </div>
+
+    <!-- TAB: DASHBOARD -->
+    <div id="tab-dashboard" class="page-section active">
+      <input type="text" id="scanInput" class="search-box" placeholder="🔍 Ketik Nama / Scan Barcode (Tekan Enter)..." oninput="handleLiveSearchDash()" onkeydown="handleScanEnter(event)">
+      
+      <div class="dash-grid">
+        <div class="dash-left">
+          <div class="scrollable-list" id="dashRiderList">
+            <div style="color: #666; text-align: center; padding: 20px;">Memuat Data...</div>
+          </div>
+        </div>
+        <div class="dash-right">
+          <div class="recent-panel">
+            <h3 style="color: var(--text-main); font-size: 14px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 8px;">🟢 Check-in Terbaru</h3>
+            <div class="recent-scroll-container" id="dashRecentContainer">
+              <div id="dashRecentList">
+                <div style="color: #666; font-size: 12px;">Belum ada data check-in.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DATA RIDERS (Master) -->
+    <div id="tab-riders" class="page-section">
+      <div class="filter-bar">
+        <input type="text" id="masterSearchInput" class="search-box" placeholder="🔍 Cari Nama, Team, Kelas, Kota, atau No WhatsApp..." oninput="renderDataRidersTable()">
+        <select id="masterFilterStatus" class="filter-select" onchange="renderDataRidersTable()">
+          <option value="ALL">📋 Semua Status</option>
+          <option value="HADIR">🟢 Sudah Hadir (Hadir)</option>
+          <option value="PENDING">⏳ Belum Hadir (Pending)</option>
+        </select>
+      </div>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Aksi</th>
+              <th>Kehadiran</th>
+              <th>No</th>
+              <th>Kode Registrasi</th>
+              <th>Nama Lengkap</th>
+              <th>WhatsApp</th>
+              <th>Tanggal Lahir</th>
+              <th>Kelas</th>
+              <th>Package</th>
+              <th>Team</th>
+              <th>Motor</th>
+              <th>Kota</th>
+              <th>Jersey Name</th>
+              <th>Jersey Number</th>
+              <th>Jersey Size</th>
+              <th>Status</th>
+              <th>Tanggal Daftar</th>
+              <th>Kamar</th>
+              <th>Timestamp</th>
+              <th>Diambil oleh</th>
+            </tr>
+          </thead>
+          <tbody id="riderTableBody">
+            <tr><td colspan="20" style="text-align: center;">Memuat Data Master...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: STATUS KAMAR (GRID) -->
+    <div id="tab-kamar" class="page-section">
+      <div class="filter-bar">
+        <input type="text" id="roomSearchInput" class="search-box" placeholder="🔍 Cari Nomor Kamar atau Nama Penghuni..." oninput="renderRoomGrid()">
+        <select id="roomFilterStatus" class="filter-select" onchange="renderRoomGrid()">
+          <option value="ALL">📋 Semua Status Kamar</option>
+          <option value="FULL">🟢 Full (Semua Hadir)</option>
+          <option value="PARTIAL">⏳ Sebagian Hadir</option>
+          <option value="EMPTY">🔴 Belum Hadir Semua</option>
+        </select>
+      </div>
+      <div style="margin-top: 15px;">
+        <div class="room-grid" id="roomGridContainer">
+          <div style="color: #666; text-align: center; padding: 20px; grid-column: 1 / -1;">Memuat Data Kamar...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SCRUTINEERING (Disembunyikan) -->
+    <div id="tab-scrut" class="page-section">
+      <div class="table-container">
+        <table>
+          <tbody id="scrutTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: MERCHANDISE (Disembunyikan) -->
+    <div id="tab-merch" class="page-section">
+      <div class="table-container">
+        <table>
+          <tbody id="merchTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: CETAK ID & QR -->
+    <div id="tab-cetak" class="page-section">
+      <div class="filter-bar">
+        <input type="text" id="cetakSearchInput" class="search-box" placeholder="🔍 Cari Nama atau Kode Registrasi untuk Cetak ID..." oninput="renderCetakList()">
+      </div>
+      <div class="scrollable-list" id="cetakContainer" style="max-height: 65vh;">
+        <div style="color: #666; text-align: center; padding: 20px;">Memuat Data Kartu ID...</div>
+      </div>
+    </div>
+
+    <!-- TAB: LAPORAN & STATISTIK (Disembunyikan) -->
+    <div id="tab-stats" class="page-section"></div>
+
+    <!-- TAB: PENGATURAN (Disembunyikan) -->
+    <div id="tab-pengaturan" class="page-section"></div>
+  </div>
+
+  <!-- POP-UP 1: DETAIL & QR CODE -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-new-card">
+      <div class="modal-left">
+        <div id="modalStatusLabel" style="color: var(--m2s-yellow); font-size: 13px; font-weight: bold; margin-bottom: 5px;">Pending Check-In</div>
+        <div id="modalNamaTop" style="font-size: 26px; font-weight: 900; color: white; margin-bottom: 20px; text-transform: uppercase;">-</div>
+        
+        <table class="detail-table">
+          <tr><td class="detail-label">Nama:</td><td class="detail-value" id="mNama">-</td></tr>
+          <tr><td class="detail-label">Team:</td><td class="detail-value" id="mTeam">-</td></tr>
+          <tr><td class="detail-label">Kelas:</td><td class="detail-value" id="mKelas">-</td></tr>
+          <tr><td class="detail-label">Motor:</td><td class="detail-value" id="mMotor">-</td></tr>
+          <tr><td class="detail-label">Kota:</td><td class="detail-value" id="mKota">-</td></tr>
+          <tr><td class="detail-label">Kamar:</td><td class="detail-value" id="mKamar">-</td></tr>
+          <tr><td class="detail-label">Jersey:</td><td class="detail-value" id="mJersey">-</td></tr>
+        </table>
+      </div>
+
+      <div class="modal-right">
+        <div style="background: white; padding: 8px; border-radius: 8px; margin-bottom: 8px;">
+          <img id="modalQR" src="" style="width: 130px; height: 130px; display: block;" alt="QR Code">
+        </div>
+        <div id="mKode" style="color: #888; font-size: 11px; margin-bottom: 15px; letter-spacing: 1px;">-</div>
+        
+        <button class="btn-popup-checkin" onclick="openConfirmModalFromDetail()">☑ CHECK-IN</button>
+        <button onclick="closeModal()" style="width: 100%; padding: 8px; background: transparent; border: none; color: #888; font-size: 12px; cursor: pointer; font-weight: bold;">TUTUP (ESC)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POP-UP 2: KONFIRMASI AKHIR -->
+  <div class="modal-confirm-overlay" id="modalConfirmOverlay">
+    <div class="modal-confirm-card">
+      <div class="modal-banner-green" id="modalConfirmBanner">CHECK-IN</div>
+      
+      <div class="rider-info-block">
+        <div class="rider-name-modal" id="confirmNama">-</div>
+        <div class="rider-detail" id="confirmTeam">-</div>
+        <div class="rider-detail" id="confirmWA">-</div>
+        <div class="rider-detail" id="confirmJersey">-</div>
+      </div>
+      
+      <div class="modal-banner-yellow">
+        <div class="modal-kamar-title">🛏️ KAMAR: <span id="confirmKamar">-</span></div>
+        <div class="modal-partner">👥 PARTNER SEKAMAR: <span id="confirmPartner">-</span></div>
+      </div>
+
+      <div class="input-group">
+        <input type="text" id="inputDiambilOleh" placeholder="DIAMBIL OLEH...">
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="checkGelang" checked>
+        <label for="checkGelang">📿 Gelang & ID Card</label>
+      </div>
+      
+      <button class="btn-submit" id="btnSubmitCheckin" onclick="confirmCheckIn()">🟩 SIMPAN & CHECK-IN (ENTER)</button>
+      <button class="btn-cancel" onclick="closeConfirmModal()">BATAL</button>
+    </div>
+  </div>
+
+  <!-- Hidden container untuk proses render & download ID Card gambar -->
+  <div id="idCardExportContainer" style="position: absolute; left: -9999px; top: -9999px;"></div>
+
+  <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwsLXxjSKrFHQ4R_Lu6LY1oVTrNSvIBkqR5oNrefq9ClP9nYnjQhRbn0e0iT1hJz670/exec";
+
+    let globalRidersData = [];
+    let selectedRider = null;
+
+    window.onload = function() { 
+      fetchData(); 
+      initRealtimeClock(); 
+    };
+
+    function initRealtimeClock() {
+      const updateClock = () => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateString = now.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        
+        document.getElementById('liveClock').innerText = timeString;
+        document.getElementById('liveDate').innerText = dateString;
+      };
+      updateClock();
+      setInterval(updateClock, 1000);
+    }
+
+    function fetchData() {
+      fetch(GAS_API_URL + "?action=getData")
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            globalRidersData = data.data;
+            updateStats();
+            handleLiveSearchDash();
+            renderDataRidersTable();
+            renderRecentCheckins();
+            renderRoomGrid();
+            renderCetakList();
+          }
+        });
+    }
+
+    function switchTab(tabName, element) {
+      if (tabName === 'keluar') {
+        if (confirm("Apakah Anda yakin ingin keluar dari sistem dashboard?")) {
+          window.location.reload();
+        }
+        return;
+      }
+
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      if (element) element.classList.add('active');
+
+      const titles = {
+        'dashboard': 'REGISTRATION DASHBOARD', 'riders': 'DATA RIDERS (MASTER DATA)',
+        'kamar': 'STATUS KAMAR (GRID)', 'cetak': 'CETAK ID & QR'
+      };
+      document.getElementById('pageTitle').innerText = titles[tabName] || 'DASHBOARD';
+    }
+
+    function updateStats() {
+      let total = globalRidersData.length;
+      let hadir = globalRidersData.filter(r => r.Kehadiran === "Hadir").length;
+      let belum = total - hadir;
+
+      document.getElementById("totalRiders").innerText = total;
+      document.getElementById("totalHadir").innerText = hadir;
+      document.getElementById("totalBelum").innerText = belum;
+    }
+
+    function handleLiveSearchDash() {
+      const searchInput = document.getElementById("scanInput");
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      const container = document.getElementById("dashRiderList");
+      container.innerHTML = "";
+
+      let displayList = [...globalRidersData];
+
+      if (!searchTerm) {
+        displayList.sort((a, b) => {
+          let aHadir = a.Kehadiran === "Hadir" ? 1 : 0;
+          let bHadir = b.Kehadiran === "Hadir" ? 1 : 0;
+          return aHadir - bHadir;
+        });
+      } else {
+        let exactMatch = globalRidersData.find(r => String(r['Kode Registrasi']).toLowerCase() === searchTerm);
+        if (exactMatch) {
+          openModal(exactMatch);
+          searchInput.value = "";
+          handleLiveSearchDash();
+          return;
+        }
+
+        displayList = globalRidersData.filter(r => {
+          let nama = String(r['Nama Lengkap'] || '').toLowerCase();
+          let team = String(r['Team'] || '').toLowerCase();
+          let kelas = String(r['Kelas'] || '').toLowerCase();
+          let kode = String(r['Kode Registrasi'] || '').toLowerCase();
+          let wa = String(r['WhatsApp'] || '').toLowerCase();
+
+          return nama.includes(searchTerm) || team.includes(searchTerm) || kelas.includes(searchTerm) || kode.includes(searchTerm) || wa.includes(searchTerm);
+        });
+
+        displayList.sort((a, b) => {
+          let namaA = String(a['Nama Lengkap'] || '').toLowerCase();
+          let namaB = String(b['Nama Lengkap'] || '').toLowerCase();
+          let matchNamaA = namaA.includes(searchTerm);
+          let matchNamaB = namaB.includes(searchTerm);
+
+          if (matchNamaA && !matchNamaB) return -1;
+          if (!matchNamaA && matchNamaB) return 1;
+          return 0;
+        });
+      }
+
+      if(displayList.length === 0) {
+        container.innerHTML = `<div style="color: #666; text-align: center; padding: 20px;">Data tidak ditemukan.</div>`;
+        return;
+      }
+
+      displayList.forEach(rider => {
+        renderRiderCard(rider, container);
+      });
+    }
+
+    function renderRiderCard(rider, container) {
+      let isHadir = rider.Kehadiran === "Hadir";
+      let card = document.createElement("div");
+      card.className = "rider-card";
+      if(isHadir) card.style.borderLeft = "4px solid var(--m2s-green)";
+      else card.style.borderLeft = "4px solid var(--m2s-yellow)";
+
+      card.innerHTML = `
+        <div>
+          <div style="font-weight: 900; font-size: 15px; color: white; margin-bottom: 4px; text-transform: uppercase;">${rider['Nama Lengkap'] || '-'}</div>
+          <div style="font-size: 12px; color: #888;">${rider['Team'] || '-'} | Kelas: ${rider['Kelas'] || '-'} | Kamar: <strong style="color: white;">${rider['Kamar'] || '-'}</strong></div>
+          <div style="font-size: 11px; margin-top: 4px; font-weight: bold;">
+            ${isHadir ? '<span style="color:var(--m2s-green);">🟢 SUDAH CHECK-IN</span>' : '<span style="color:var(--m2s-yellow);">⏳ PENDING</span>'}
+          </div>
+        </div>
+        <div>
+          <button class="btn-detail" onclick='openModal(${JSON.stringify(rider)})'>DETAIL</button>
+        </div>
+      `;
+      container.appendChild(card);
+    }
+
+    function handleScanEnter(e) {
+      if (e.key === "Enter") {
+        let val = document.getElementById("scanInput").value.trim().toLowerCase();
+        if(!val) return;
+        
+        let found = globalRidersData.find(r => 
+          String(r['Kode Registrasi']).toLowerCase() === val ||
+          String(r['Nama Lengkap']).toLowerCase().includes(val) ||
+          String(r['WhatsApp']).includes(val)
+        );
+
+        if (found) {
+          openModal(found);
+          document.getElementById("scanInput").value = "";
+          handleLiveSearchDash();
+        }
+      }
+    }
+
+    function renderRecentCheckins() {
+      const container = document.getElementById("dashRecentList");
+      container.innerHTML = "";
+      
+      let hadirData = globalRidersData.filter(r => r.Kehadiran === "Hadir" && r.Timestamp);
+      
+      hadirData.sort((a, b) => {
+        let timeA = new Date(a.Timestamp).getTime() || 0;
+        let timeB = new Date(b.Timestamp).getTime() || 0;
+        return timeB - timeA;
+      });
+      
+      if(hadirData.length === 0) {
+        container.innerHTML = `<div style="color: #666; font-size: 12px;">Belum ada data check-in.</div>`;
+        return;
+      }
+
+      hadirData.forEach(rider => {
+        let item = document.createElement("div");
+        item.className = "recent-item";
+        
+        let formattedDate = "-";
+        let formattedTime = "-";
+        if (rider['Timestamp']) {
+          let dateObj = new Date(rider['Timestamp']);
+          if (!isNaN(dateObj.getTime())) {
+            formattedDate = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          } else {
+            formattedDate = rider['Timestamp'].split(' ')[0] || '-';
+            formattedTime = rider['Timestamp'].includes('T') ? rider['Timestamp'].split('T')[1].substring(0, 8) : rider['Timestamp'];
+          }
+        }
+
+        item.innerHTML = `
+          <div style="font-weight: 900; font-size: 13px; color: white; text-transform: uppercase;">${rider['Nama Lengkap']}</div>
+          <div style="font-size: 11px; color: var(--m2s-yellow); text-transform: uppercase; margin: 2px 0;">🏢 ${rider['Team'] || '-'}</div>
+          <div style="font-size: 10px; color: #888; display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+            <span>Kamar: ${rider['Kamar'] || '-'}</span>
+            <span style="color: var(--m2s-green); font-weight: bold; display: flex; gap: 6px;">
+              <span>📅 ${formattedDate}</span>
+              <span>🕒 ${formattedTime}</span>
+            </span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderDataRidersTable() {
+      const riderTbody = document.getElementById("riderTableBody");
+      const searchTerm = document.getElementById("masterSearchInput") ? document.getElementById("masterSearchInput").value.trim().toLowerCase() : "";
+      const filterStatus = document.getElementById("masterFilterStatus") ? document.getElementById("masterFilterStatus").value : "ALL";
+      
+      riderTbody.innerHTML = "";
+
+      let filteredData = globalRidersData.filter(rider => {
+        let isHadir = rider.Kehadiran === "Hadir";
+        
+        if (filterStatus === "HADIR" && !isHadir) return false;
+        if (filterStatus === "PENDING" && isHadir) return false;
+
+        if (!searchTerm) return true;
+        let nama = String(rider['Nama Lengkap'] || '').toLowerCase();
+        let team = String(rider['Team'] || '').toLowerCase();
+        let kelas = String(rider['Kelas'] || '').toLowerCase();
+        let kota = String(rider['Kota'] || '').toLowerCase();
+        let kode = String(rider['Kode Registrasi'] || '').toLowerCase();
+        let wa = String(rider['WhatsApp'] || '').toLowerCase();
+
+        return nama.includes(searchTerm) || team.includes(searchTerm) || kelas.includes(searchTerm) || kota.includes(searchTerm) || kode.includes(searchTerm) || wa.includes(searchTerm);
+      });
+
+      if (filteredData.length === 0) {
+        riderTbody.innerHTML = `<tr><td colspan="20" style="text-align: center; color: #666; padding: 20px;">Data master tidak ditemukan.</td></tr>`;
+        return;
+      }
+
+      filteredData.forEach(rider => {
+        let isHadir = rider.Kehadiran === "Hadir";
+        let trR = document.createElement("tr");
+        if (isHadir) trR.classList.add("hadir-row");
+        trR.innerHTML = `
+          <td><button class="btn-detail" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" onclick='openModal(${JSON.stringify(rider)})'>Check-in</button></td>
+          <td><strong style="color:${isHadir?'var(--m2s-green)':'var(--text-muted)'}">${isHadir ? 'HADIR' : 'BELUM'}</strong></td>
+          <td>${rider['No'] || '-'}</td>
+          <td>${rider['Kode Registrasi'] || '-'}</td>
+          <td>${rider['Nama Lengkap'] || '-'}</td>
+          <td>${rider['WhatsApp'] || '-'}</td>
+          <td>${rider['Tanggal Lahir'] || '-'}</td>
+          <td>${rider['Kelas'] || '-'}</td>
+          <td>${rider['Package'] || '-'}</td>
+          <td>${rider['Team'] || '-'}</td>
+          <td>${rider['Motor'] || '-'}</td>
+          <td>${rider['Kota'] || '-'}</td>
+          <td>${rider['Jersey Name'] || '-'}</td>
+          <td>${rider['Jersey Number'] || '-'}</td>
+          <td>${rider['Jersey Size'] || '-'}</td>
+          <td>${rider['Status'] || '-'}</td>
+          <td>${rider['Tanggal Daftar'] || '-'}</td>
+          <td>${rider['Kamar'] || '-'}</td>
+          <td>${rider['Timestamp'] || '-'}</td>
+          <td>${rider['Diambil oleh'] || '-'}</td>
+        `;
+        riderTbody.appendChild(trR);
+      });
+    }
+
+    function renderRoomGrid() {
+      const container = document.getElementById("roomGridContainer");
+      const searchTerm = document.getElementById("roomSearchInput") ? document.getElementById("roomSearchInput").value.trim().toLowerCase() : "";
+      const filterStatus = document.getElementById("roomFilterStatus") ? document.getElementById("roomFilterStatus").value : "ALL";
+      
+      if (!container) return;
+      container.innerHTML = "";
+
+      let roomMap = {};
+      globalRidersData.forEach(rider => {
+        let kamar = String(rider['Kamar'] || 'TANPA KAMAR').trim();
+        if (!kamar || kamar === "-" || kamar === "undefined") kamar = "TANPA KAMAR";
+        
+        if (!roomMap[kamar]) {
+          roomMap[kamar] = [];
+        }
+        roomMap[kamar].push(rider);
+      });
+
+      let roomKeys = Object.keys(roomMap).sort((a, b) => {
+        if (a === "TANPA KAMAR") return 1;
+        if (b === "TANPA KAMAR") return -1;
+        return a.localeCompare(b, undefined, { numeric: true });
+      });
+
+      roomKeys = roomKeys.filter(room => {
+        let occupants = roomMap[room];
+        let totalOccupant = occupants.length;
+        let hadirCount = occupants.filter(r => r.Kehadiran === "Hadir").length;
+
+        let roomStatusType = "PARTIAL";
+        if (hadirCount === totalOccupant) roomStatusType = "FULL";
+        else if (hadirCount === 0) roomStatusType = "EMPTY";
+
+        if (filterStatus === "FULL" && roomStatusType !== "FULL") return false;
+        if (filterStatus === "PARTIAL" && roomStatusType !== "PARTIAL") return false;
+        if (filterStatus === "EMPTY" && roomStatusType !== "EMPTY") return false;
+
+        if (!searchTerm) return true;
+        let matchRoom = room.toLowerCase().includes(searchTerm);
+        let matchOccupant = occupants.some(r => 
+          String(r['Nama Lengkap'] || '').toLowerCase().includes(searchTerm) ||
+          String(r['Team'] || '').toLowerCase().includes(searchTerm)
+        );
+        return matchRoom || matchOccupant;
+      });
+
+      if (roomKeys.length === 0) {
+        container.innerHTML = `<div style="color: #666; text-align: center; padding: 20px; grid-column: 1 / -1;">Kamar tidak ditemukan.</div>`;
+        return;
+      }
+
+      roomKeys.forEach(roomNo => {
+        let occupants = roomMap[roomNo];
+        let totalOccupant = occupants.length;
+        let hadirCount = occupants.filter(r => r.Kehadiran === "Hadir").length;
+        
+        let badgeColor = "var(--m2s-yellow)";
+        let badgeText = `⏳ ${hadirCount}/${totalOccupant} HADIR`;
+
+        if (hadirCount === totalOccupant) {
+          badgeColor = "var(--m2s-green)";
+          badgeText = "🟢 FULL";
+        } else if (hadirCount === 0) {
+          badgeColor = "var(--m2s-red)";
+          badgeText = "🔴 KOSONG (0 HADIR)";
+        }
+
+        let card = document.createElement("div");
+        card.className = "room-card";
+        card.style.borderLeft = `4px solid ${badgeColor}`;
+
+        let occupantHtml = "";
+        occupants.forEach(occ => {
+          let occHadir = occ.Kehadiran === "Hadir";
+          occupantHtml += `
+            <div class="room-occupant">
+              <span style="color: white; font-weight: 600; text-transform: uppercase;">${occ['Nama Lengkap'] || '-'}</span>
+              <span style="font-size: 11px; font-weight: bold; color: ${occHadir ? 'var(--m2s-green)' : 'var(--text-muted)'};">
+                ${occHadir ? '🟢 Hadir' : '⏳ Pending'}
+              </span>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="room-header">
+            <span class="room-number">🛏️ KAMAR ${roomNo}</span>
+            <span class="room-badge" style="background: rgba(255,255,255,0.08); color: ${badgeColor}; border: 1px solid ${badgeColor};">${badgeText}</span>
+          </div>
+          <div class="room-occupant-list">
+            ${occupantHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /* Fungsi Cetak ID & QR dengan Preview ID Card dan Tombol Save ID Card */
+    function renderCetakList() {
+      const container = document.getElementById("cetakContainer");
+      const searchTerm = document.getElementById("cetakSearchInput") ? document.getElementById("cetakSearchInput").value.trim().toLowerCase() : "";
+      if (!container) return;
+      container.innerHTML = "";
+
+      let filteredData = globalRidersData.filter(rider => {
+        if (!searchTerm) return true;
+        let nama = String(rider['Nama Lengkap'] || '').toLowerCase();
+        let kode = String(rider['Kode Registrasi'] || '').toLowerCase();
+        return nama.includes(searchTerm) || kode.includes(searchTerm);
+      });
+
+      if (filteredData.length === 0) {
+        container.innerHTML = `<div style="color: #666; text-align: center; padding: 20px;">Data peserta tidak ditemukan.</div>`;
+        return;
+      }
+
+      filteredData.forEach(rider => {
+        let card = document.createElement("div");
+        card.className = "cetak-row-card";
+        
+        let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(rider['Kode Registrasi'] || '')}`;
+
+        card.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+            <!-- Mini Preview ID Card (Teks Mostly2stroke digabung & Nama Kuning) -->
+            <div class="id-card-preview-box">
+              <div style="font-size: 8px; font-weight: 900; color: #d00; text-transform: uppercase; font-style: italic;">MOSTLY2STROKE - OFFICIAL ID CARD</div>
+              <div>
+                <div style="font-size: 10px; font-weight: 900; text-transform: uppercase; color: #b5c200; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rider['Nama Lengkap'] || '-'}</div>
+                <div style="font-size: 8px; font-weight: bold; color: #444; text-transform: uppercase;">Team: ${rider['Team'] || '-'} | Kamar: ${rider['Kamar'] || '-'}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div style="font-size: 7px; font-weight: bold; color: #666; word-break: break-all; max-width: 120px;">KODE: ${rider['Kode Registrasi'] || '-'}</div>
+                <img src="${qrUrl}" style="width: 35px; height: 35px;" alt="QR">
+              </div>
+            </div>
+
+            <div>
+              <div style="font-weight: 900; font-size: 16px; color: white; margin-bottom: 4px; text-transform: uppercase;">${rider['Nama Lengkap'] || '-'}</div>
+              <div style="font-size: 12px; color: #888;">Kode: <strong style="color: var(--m2s-yellow);">${rider['Kode Registrasi'] || '-'}</strong> | Team: ${rider['Team'] || '-'} | Kelas: ${rider['Kelas'] || '-'}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-detail" style="background:var(--m2s-yellow); color:black; border:none; padding: 10px 14px; font-size: 12px;" onclick="bukaCetakModal('${rider['Kode Registrasi']}')">🖨️ Cetak ID & QR</button>
+            <button class="btn-detail" style="background:#28a745; color:white; border:none; padding: 10px 14px; font-size: 12px;" onclick="downloadIdCard('${rider['Kode Registrasi']}')">💾 Save ID Card</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function bukaCetakModal(kodeReg) {
+      let rider = globalRidersData.find(r => String(r['Kode Registrasi']) === String(kodeReg));
+      if (!rider) return;
+
+      let printWindow = window.open('', '_blank', 'width=500,height=400');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Cetak ID Card - ${rider['Nama Lengkap']}</title>
+            <style>
+              @page {
+                size: 9cm 5.5cm;
+                margin: 0;
+              }
+              body { 
+                font-family: Arial, sans-serif; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+                margin: 0; 
+                background: #fff; 
+              }
+              .id-card {
+                width: 9cm;
+                height: 5.5cm;
+                background: #ffffff;
+                color: #000000;
+                box-sizing: border-box;
+                padding: 8px 12px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                text-align: center;
+              }
+              .header { font-size: 12px; font-weight: 900; color: #d00; font-style: italic; text-transform: uppercase; }
+              .name { font-size: 15px; font-weight: 900; text-transform: uppercase; margin: 2px 0; color: #b5c200; }
+              .details { font-size: 9px; font-weight: bold; color: #333; text-transform: uppercase; }
+              .qr-box img { width: 65px; height: 65px; }
+              .footer { font-size: 8px; color: #666; font-weight: bold; }
+              @media print {
+                body { background: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="id-card">
+              <div class="header">MOSTLY2STROKE - OFFICIAL ID CARD</div>
+              <div>
+                <div class="name">${rider['Nama Lengkap'] || '-'}</div>
+                <div class="details">TEAM: ${rider['Team'] || '-'} | KELAS: ${rider['Kelas'] || '-'}</div>
+                <div class="details">KAMAR: ${rider['Kamar'] || '-'} | NO. URUT: ${rider['No'] || '-'}</div>
+              </div>
+              <div class="qr-box">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(rider['Kode Registrasi'] || '')}" alt="QR">
+              </div>
+              <div class="footer">KODE: ${rider['Kode Registrasi'] || '-'}</div>
+            </div>
+            <script>
+              window.onload = function() {
+                window.print();
+                window.close();
+              }
+            <\/script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
+    function downloadIdCard(kodeReg) {
+      let rider = globalRidersData.find(r => String(r['Kode Registrasi']) === String(kodeReg));
+      if (!rider) return;
+
+      let exportBox = document.getElementById("idCardExportContainer");
+      exportBox.innerHTML = `
+        <div id="targetCard" style="width: 540px; height: 330px; background: #ffffff; color: #000000; box-sizing: border-box; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; text-align: center; font-family: Arial, sans-serif;">
+          <div style="font-size: 16px; font-weight: 900; color: #d00; font-style: italic; text-transform: uppercase;">MOSTLY2STROKE - OFFICIAL ID CARD</div>
+          <div>
+            <div style="font-size: 22px; font-weight: 900; text-transform: uppercase; margin: 4px 0; color: #b5c200;">${rider['Nama Lengkap'] || '-'}</div>
+            <div style="font-size: 13px; font-weight: bold; color: #333; text-transform: uppercase;">TEAM: ${rider['Team'] || '-'} | KELAS: ${rider['Kelas'] || '-'}</div>
+            <div style="font-size: 13px; font-weight: bold; color: #333; text-transform: uppercase; margin-top: 2px;">KAMAR: ${rider['Kamar'] || '-'} | NO. URUT: ${rider['No'] || '-'}</div>
+          </div>
+          <div style="margin: 5px auto;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(rider['Kode Registrasi'] || '')}" style="width: 85px; height: 85px;" crossorigin="anonymous" alt="QR">
+          </div>
+          <div style="font-size: 11px; color: #666; font-weight: bold;">KODE: ${rider['Kode Registrasi'] || '-'}</div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        html2canvas(document.getElementById("targetCard"), { useCORS: true }).then(canvas => {
+          let link = document.createElement('a');
+          link.download = `ID-CARD-${rider['Nama Lengkap'].replace(/\s+/g, '_')}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          exportBox.innerHTML = "";
+        });
+      }, 300);
+    }
+
+    function getPartnerSekamar(noKamar, currentNamaLengkap) {
+      if (!noKamar || noKamar === "-" || noKamar === "") return "TIDAK ADA";
+      let partners = globalRidersData.filter(r => r['Kamar'] == noKamar && r['Nama Lengkap'] !== currentNamaLengkap);
+      return partners.length > 0 ? partners.map(p => p['Nama Lengkap']).join(", ") : "TIDAK ADA";
+    }
+
+    function openModal(rider) {
+      selectedRider = rider;
+      
+      let isHadir = rider.Kehadiran === "Hadir";
+      let statusLabel = document.getElementById("modalStatusLabel");
+      if (isHadir) {
+        statusLabel.innerText = "🟢 Sudah Check-In";
+        statusLabel.style.color = "var(--m2s-green)";
+      } else {
+        statusLabel.innerText = "Pending Check-In";
+        statusLabel.style.color = "var(--m2s-yellow)";
+      }
+
+      document.getElementById("modalNamaTop").innerText = rider['Nama Lengkap'] || "-";
+      document.getElementById("mNama").innerText = rider['Nama Lengkap'] || "-";
+      document.getElementById("mTeam").innerText = rider['Team'] || "-";
+      document.getElementById("mKelas").innerText = rider['Kelas'] || "-";
+      document.getElementById("mMotor").innerText = rider['Motor'] || "-";
+      document.getElementById("mKota").innerText = rider['Kota'] || "-";
+      document.getElementById("mKamar").innerText = rider['Kamar'] || "-";
+      document.getElementById("mJersey").innerText = (rider['Jersey Name'] || "-") + " | #" + (rider['Jersey Number'] || "-") + " | Size " + (rider['Jersey Size'] || "-");
+      
+      let regCode = rider['Kode Registrasi'] || "";
+      document.getElementById("mKode").innerText = regCode;
+      
+      if(regCode) {
+        document.getElementById("modalQR").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(regCode)}`;
+        document.getElementById("modalQR").style.display = "block";
+      } else {
+        document.getElementById("modalQR").style.display = "none";
+      }
+
+      document.getElementById("modalOverlay").style.display = "flex";
+      document.getElementById("modalOverlay").style.visibility = "visible";
+    }
+
+    function closeModal() {
+      let modal1 = document.getElementById("modalOverlay");
+      modal1.style.display = "none";
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    function openConfirmModalFromDetail() {
+      if(!selectedRider) return;
+      
+      let modal1 = document.getElementById("modalOverlay");
+      modal1.style.display = "none";
+      modal1.style.visibility = "hidden";
+
+      let rider = selectedRider;
+      let isHadir = rider.Kehadiran === "Hadir";
+      let banner = document.getElementById("modalConfirmBanner");
+      
+      if (isHadir) {
+        banner.innerText = "⚠️ SUDAH REGISTRASI (DOUBLE SCAN)";
+        banner.style.background = "var(--m2s-red)";
+      } else {
+        banner.innerText = "CHECK-IN";
+        banner.style.background = "var(--m2s-green)";
+      }
+
+      document.getElementById("confirmNama").innerText = rider['Nama Lengkap'] || "-";
+      document.getElementById("confirmTeam").innerText = rider['Team'] || "-";
+      document.getElementById("confirmWA").innerText = "WHATSAPP: " + (rider['WhatsApp'] || "-");
+      document.getElementById("confirmJersey").innerText = "JERSEY: " + (rider['Jersey Name'] || "-") + " | #" + (rider['Jersey Number'] || "-") + " | Size " + (rider['Jersey Size'] || "-");
+      
+      document.getElementById("confirmKamar").innerText = rider['Kamar'] || "-";
+      document.getElementById("confirmPartner").innerText = getPartnerSekamar(rider['Kamar'], rider['Nama Lengkap']);
+      
+      document.getElementById("inputDiambilOleh").value = rider['Nama Lengkap'] || "";
+      document.getElementById("checkGelang").checked = true;
+      
+      let modal2 = document.getElementById("modalConfirmOverlay");
+      modal2.style.display = "flex";
+      modal2.style.visibility = "visible";
+      
+      document.getElementById("btnSubmitCheckin").focus();
+    }
+
+    function closeConfirmModal() {
+      document.getElementById("modalConfirmOverlay").style.display = "none";
+    }
+
+    function confirmCheckIn() {
+      if (!selectedRider) return;
+      if (!document.getElementById("checkGelang").checked) {
+        alert("Harap centang konfirmasi Gelang & ID Card!");
+        return;
+      }
+
+      let btn = document.getElementById("btnSubmitCheckin");
+      btn.innerText = "MENYIMPAN...";
+      btn.disabled = true;
+
+      let payload = {
+        action: "checkIn",
+        rowIndex: selectedRider.rowIndex,
+        kodeRegistrasi: selectedRider['Kode Registrasi'],
+        namaPeserta: selectedRider['Nama Lengkap'],
+        diambilOleh: document.getElementById("inputDiambilOleh").value
+      };
+
+      fetch(GAS_API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)";
+        btn.disabled = false;
+        if (res.status === "success") {
+          closeConfirmModal();
+          fetchData(); 
+        } else {
+          alert("Error: " + res.message);
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function(e) {
+      let modal1 = document.getElementById("modalOverlay");
+      let modal2 = document.getElementById("modalConfirmOverlay");
+
+      if (modal1.style.display === "flex") {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          openConfirmModalFromDetail();
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+      }
+
+      if (modal2.style.display === "flex") {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          confirmCheckIn();
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeConfirmModal();
+          return;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
