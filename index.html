@@ -205,6 +205,402 @@
     .checkbox-group label { font-size: 13px; font-weight: bold; color: white; cursor: default; }
     .btn-submit { width: 100%; padding: 14px; background: var(--m2s-green); border: none; color: white; font-weight: 900; font-size: 15px; border-radius: 6px; cursor: pointer; text-transform: uppercase; }
     .btn-cancel { width: 100%; padding: 8px; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 12px; cursor: pointer; }
+
+/* =========================================
+   MOSTLY 2STROKE - RESPONSIVE MOBILE CSS
+   Tambahkan sebelum </style> di index.html
+   ========================================= */
+
+/* Mencegah elemen melebar keluar layar */
+html {
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  min-width: 0;
+}
+
+.main-content {
+  min-width: 0;
+}
+
+/* Tablet dan HP */
+@media screen and (max-width: 900px) {
+
+  /* Sidebar berubah menjadi navigasi bagian atas */
+  body {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 12px;
+    border-right: none;
+    border-bottom: 1px solid #333;
+    position: relative;
+    z-index: 50;
+  }
+
+  .brand-logo {
+    font-size: 22px;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    line-height: 0.95;
+  }
+
+  .nav-menu {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 5px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-bottom: 0;
+    padding: 11px 12px;
+    font-size: 12px;
+    border-left: none;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    border-left: none;
+    border-bottom: 3px solid var(--m2s-yellow);
+  }
+
+  /* Konten utama */
+  .main-content {
+    width: 100%;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  /* Header: judul, jam, statistik */
+  .header-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .header-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 17px;
+    text-align: center;
+    justify-self: auto;
+  }
+
+  .realtime-clock-box {
+    justify-self: auto;
+    align-self: center;
+    max-width: 100%;
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .clock-time {
+    font-size: 22px;
+    letter-spacing: 1px;
+  }
+
+  .clock-date {
+    font-size: 10px;
+    white-space: normal;
+  }
+
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    padding: 12px 8px;
+    justify-self: auto;
+  }
+
+  .stat-box {
+    text-align: center;
+    font-size: 11px;
+    min-width: 0;
+  }
+
+  .stat-val {
+    display: block;
+    font-size: 20px;
+    margin-top: 4px;
+  }
+
+  /* Pencarian dan filter */
+  .search-box {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 12px;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .filter-bar input {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .filter-select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Dashboard: daftar dan riwayat menjadi satu kolom */
+  .dash-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .dash-left,
+  .dash-right {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .scrollable-list {
+    max-height: 55vh;
+    padding-right: 0;
+  }
+
+  .rider-card {
+    gap: 12px;
+    padding: 13px;
+  }
+
+  .rider-card > div:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .btn-detail {
+    min-height: 40px;
+    padding: 10px 12px;
+  }
+
+  .recent-panel {
+    height: 300px;
+    padding: 12px;
+  }
+
+  .recent-scroll-container {
+    min-height: 0;
+  }
+
+  /* Tabel tetap bisa digeser ke kanan-kiri */
+  .table-container {
+    width: 100%;
+    max-width: 100%;
+    max-height: 65vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 10px 12px;
+  }
+
+  /* Grid kamar */
+  .room-grid {
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(100%, 240px), 1fr)
+    );
+    max-height: none;
+    padding-right: 0;
+  }
+
+  .room-card {
+    min-width: 0;
+  }
+
+  .room-occupant {
+    gap: 8px;
+    overflow-wrap: anywhere;
+  }
+
+  /* Daftar cetak ID */
+  .cetak-row-card {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .id-card-preview-box {
+    max-width: 100%;
+  }
+
+  /* Popup detail peserta dan QR */
+  .modal-overlay,
+  .modal-confirm-overlay {
+    padding: 12px;
+    align-items: flex-start;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-new-card {
+    width: 100%;
+    max-width: 520px;
+    margin: auto;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .modal-left {
+    padding: 18px;
+    border-right: none;
+    border-bottom: 1px solid #2a2a2a;
+  }
+
+  .modal-right {
+    width: 100%;
+    padding: 18px;
+  }
+
+  .detail-table {
+    table-layout: fixed;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-label {
+    width: 90px;
+  }
+
+  .modal-confirm-card {
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow-y: auto;
+    margin: auto;
+    padding: 18px;
+  }
+
+  .rider-name-modal {
+    font-size: 23px;
+    overflow-wrap: anywhere;
+  }
+
+  .modal-kamar-title {
+    font-size: 21px;
+  }
+
+  .btn-popup-checkin,
+  .btn-submit {
+    min-height: 46px;
+  }
+
+  /* Area input lebih mudah disentuh */
+  button,
+  select,
+  input {
+    touch-action: manipulation;
+  }
+}
+
+/* HP kecil */
+@media screen and (max-width: 480px) {
+
+  .main-content {
+    padding: 10px;
+  }
+
+  .sidebar {
+    padding: 10px;
+  }
+
+  .brand-logo {
+    font-size: 20px;
+  }
+
+  .nav-item {
+    font-size: 11px;
+    padding: 10px;
+  }
+
+  .header-title {
+    font-size: 15px;
+  }
+
+  .realtime-clock-box {
+    gap: 7px;
+    padding: 7px 9px;
+  }
+
+  .clock-time {
+    font-size: 19px;
+  }
+
+  .clock-date {
+    font-size: 9px;
+    padding-left: 7px;
+  }
+
+  .stats-container {
+    gap: 4px;
+    padding: 10px 5px;
+  }
+
+  .stat-box {
+    font-size: 10px;
+  }
+
+  .stat-val {
+    font-size: 18px;
+  }
+
+  .rider-card {
+    padding: 11px;
+    gap: 8px;
+  }
+
+  .recent-panel {
+    height: 260px;
+  }
+
+  .modal-left,
+  .modal-right {
+    padding: 14px;
+  }
+
+  .modal-confirm-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .modal-banner-green,
+  .modal-banner-yellow {
+    padding: 10px;
+  }
+}
   </style>
 </head>
 <body>
