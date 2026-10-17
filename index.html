@@ -910,9 +910,14 @@ body {
           return aHadir - bHadir;
         });
       } else {
-        // Jangan membuka popup dari event oninput.
-        // Scanner mengisi kolom karakter demi karakter; popup harus diproses
-        // oleh handleScanEnter() setelah scanner mengirim tombol Enter.
+        let exactMatch = globalRidersData.find(r => String(r['Kode Registrasi']).toLowerCase() === searchTerm);
+        if (exactMatch) {
+          openModal(exactMatch);
+          searchInput.value = "";
+          handleLiveSearchDash();
+          return;
+        }
+
         displayList = globalRidersData.filter(r => {
           let nama = String(r['Nama Lengkap'] || '').toLowerCase();
           let team = String(r['Team'] || '').toLowerCase();
@@ -972,18 +977,13 @@ body {
       e.preventDefault();
 
       const scanInput = document.getElementById("scanInput");
-      const rawVal = String(scanInput.value || "").trim();
-      const val = rawVal.toLowerCase();
+      const val = String(scanInput.value || "").trim().toLowerCase();
       if (!val) return;
 
-      // Normalisasi hasil scanner agar spasi/baris baru tidak menggagalkan pencocokan.
-      const normalizedVal = val.replace(/[\s\u200B-\u200D\uFEFF]/g, "");
-
-      // QR dicocokkan berdasarkan Kode Registrasi.
-      const exactCodeMatch = globalRidersData.find(r => {
-        const code = String(r['Kode Registrasi'] || '').trim().toLowerCase();
-        return code === val || code.replace(/[\s\u200B-\u200D\uFEFF]/g, "") === normalizedVal;
-      });
+      // QR harus dicocokkan secara tepat dengan Kode Registrasi.
+      const exactCodeMatch = globalRidersData.find(r =>
+        String(r['Kode Registrasi'] || '').trim().toLowerCase() === val
+      );
 
       // Nama/WhatsApp tetap memakai alur detail lama.
       const found = exactCodeMatch || globalRidersData.find(r =>
@@ -1420,6 +1420,39 @@ body {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
+    // Voice notification: menggunakan Text-to-Speech bawaan browser.
+    // Pilihan suara laki-laki dicoba berdasarkan nama voice yang tersedia di perangkat.
+    function speakScanMessage(type, riderName) {
+      if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+        console.warn('Text-to-Speech tidak didukung browser ini.');
+        return;
+      }
+
+      const name = String(riderName || '').trim();
+      const message = type === 'double'
+        ? `${name ? name + ', ' : ''}already checked in!`
+        : `Welcome, ${name || 'rider'}!`;
+
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'en-US';
+        utterance.rate = type === 'double' ? 0.92 : 0.96;
+        utterance.pitch = type === 'double' ? 0.88 : 0.96;
+        utterance.volume = 1;
+
+        const voices = window.speechSynthesis.getVoices();
+        const englishVoices = voices.filter(v => /^en(-|_)/i.test(v.lang));
+        const maleHints = /male|man|guy|david|mark|daniel|james|alex|fred|tom/i;
+        const preferred = englishVoices.find(v => maleHints.test(v.name)) || englishVoices[0];
+        if (preferred) utterance.voice = preferred;
+
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        console.warn('Suara notifikasi tidak dapat diputar:', err);
+      }
+    }
+
     function openConfirmModalFromDetail() {
       if(!selectedRider) return;
       
@@ -1434,6 +1467,7 @@ body {
       if (isHadir) {
         banner.innerText = "⚠️ SUDAH REGISTRASI (DOUBLE SCAN)";
         banner.style.background = "var(--m2s-red)";
+        speakScanMessage('double', rider['Nama Lengkap']);
       } else {
         banner.innerText = "CHECK-IN";
         banner.style.background = "var(--m2s-green)";
@@ -1489,6 +1523,7 @@ body {
         btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)";
         btn.disabled = false;
         if (res.status === "success") {
+          speakScanMessage('success', selectedRider['Nama Lengkap']);
           closeConfirmModal();
           fetchData(); 
         } else {
