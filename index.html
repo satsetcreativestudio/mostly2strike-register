@@ -885,13 +885,9 @@ body {
       document.getElementById('pageTitle').innerText = titles[tabName] || 'DASHBOARD';
     }
 
-    function isRiderHadir(rider) {
-      return String(rider && rider.Kehadiran || "").trim().toLowerCase() === "hadir";
-    }
-
     function updateStats() {
       let total = globalRidersData.length;
-      let hadir = globalRidersData.filter(r => isRiderHadir(r)).length;
+      let hadir = globalRidersData.filter(r => r.Kehadiran === "Hadir").length;
       let belum = total - hadir;
 
       document.getElementById("totalRiders").innerText = total;
@@ -909,13 +905,19 @@ body {
 
       if (!searchTerm) {
         displayList.sort((a, b) => {
-          let aHadir = isRiderHadir(a) ? 1 : 0;
-          let bHadir = isRiderHadir(b) ? 1 : 0;
+          let aHadir = a.Kehadiran === "Hadir" ? 1 : 0;
+          let bHadir = b.Kehadiran === "Hadir" ? 1 : 0;
           return aHadir - bHadir;
         });
       } else {
-        // Jangan buka popup saat input masih diketik/diisi scanner.
-        // Popup akan dibuka setelah scanner mengirim Enter di handleScanEnter().
+        let exactMatch = globalRidersData.find(r => String(r['Kode Registrasi']).toLowerCase() === searchTerm);
+        if (exactMatch) {
+          openModal(exactMatch);
+          searchInput.value = "";
+          handleLiveSearchDash();
+          return;
+        }
+
         displayList = globalRidersData.filter(r => {
           let nama = String(r['Nama Lengkap'] || '').toLowerCase();
           let team = String(r['Team'] || '').toLowerCase();
@@ -949,7 +951,7 @@ body {
     }
 
     function renderRiderCard(rider, container) {
-      let isHadir = isRiderHadir(rider);
+      let isHadir = String(rider.Kehadiran || '').trim().toLowerCase() === 'hadir';
       let card = document.createElement("div");
       card.className = "rider-card";
       if(isHadir) card.style.borderLeft = "4px solid var(--m2s-green)";
@@ -974,43 +976,44 @@ body {
       if (e.key !== "Enter") return;
       e.preventDefault();
 
-      const searchInput = document.getElementById("scanInput");
-      const val = searchInput.value.trim().toLowerCase();
+      const scanInput = document.getElementById("scanInput");
+      const val = String(scanInput.value || "").trim().toLowerCase();
       if (!val) return;
 
-      // QR berisi kode registrasi: langsung ke popup konfirmasi (popup kedua).
+      // QR harus dicocokkan secara tepat dengan Kode Registrasi.
       const exactCodeMatch = globalRidersData.find(r =>
         String(r['Kode Registrasi'] || '').trim().toLowerCase() === val
       );
 
-      if (exactCodeMatch) {
-        selectedRider = exactCodeMatch;
-        searchInput.value = "";
-        handleLiveSearchDash();
+      // Nama/WhatsApp tetap memakai alur detail lama.
+      const found = exactCodeMatch || globalRidersData.find(r =>
+        String(r['Nama Lengkap'] || '').trim().toLowerCase().includes(val) ||
+        String(r['WhatsApp'] || '').replace(/\D/g, '').includes(val.replace(/\D/g, ''))
+      );
+
+      if (!found) return;
+
+      scanInput.value = "";
+      handleLiveSearchDash();
+
+      // Jika QR milik peserta yang sudah hadir, langsung munculkan popup
+      // konfirmasi dengan banner DOUBLE SCAN, tanpa perlu membuka detail dulu.
+      const status = String(found.Kehadiran || '').trim().toLowerCase();
+      if (exactCodeMatch && status === 'hadir') {
+        selectedRider = found;
         openConfirmModalFromDetail();
         return;
       }
 
-      // Pencarian manual berdasarkan nama/WhatsApp tetap membuka popup detail pertama.
-      const manualMatch = globalRidersData.find(r =>
-        String(r['Nama Lengkap'] || '').toLowerCase().includes(val) ||
-        String(r['WhatsApp'] || '').replace(/\D/g, '').includes(val.replace(/\D/g, ''))
-      );
-
-      if (manualMatch) {
-        openModal(manualMatch);
-        searchInput.value = "";
-        handleLiveSearchDash();
-      } else {
-        alert("Kode registrasi/peserta tidak ditemukan. Pastikan QR berisi Kode Registrasi yang sesuai.");
-      }
+      // Alur normal peserta yang belum hadir dan pencarian manual tetap sama.
+      openModal(found);
     }
 
     function renderRecentCheckins() {
       const container = document.getElementById("dashRecentList");
       container.innerHTML = "";
       
-      let hadirData = globalRidersData.filter(r => isRiderHadir(r) && r.Timestamp);
+      let hadirData = globalRidersData.filter(r => r.Kehadiran === "Hadir" && r.Timestamp);
       
       hadirData.sort((a, b) => {
         let timeA = new Date(a.Timestamp).getTime() || 0;
@@ -1063,7 +1066,7 @@ body {
       riderTbody.innerHTML = "";
 
       let filteredData = globalRidersData.filter(rider => {
-        let isHadir = isRiderHadir(rider);
+        let isHadir = rider.Kehadiran === "Hadir";
         
         if (filterStatus === "HADIR" && !isHadir) return false;
         if (filterStatus === "PENDING" && isHadir) return false;
@@ -1085,7 +1088,7 @@ body {
       }
 
       filteredData.forEach(rider => {
-        let isHadir = isRiderHadir(rider);
+        let isHadir = rider.Kehadiran === "Hadir";
         let trR = document.createElement("tr");
         if (isHadir) trR.classList.add("hadir-row");
         trR.innerHTML = `
@@ -1377,7 +1380,7 @@ body {
     function openModal(rider) {
       selectedRider = rider;
       
-      let isHadir = isRiderHadir(rider);
+      let isHadir = rider.Kehadiran === "Hadir";
       let statusLabel = document.getElementById("modalStatusLabel");
       if (isHadir) {
         statusLabel.innerText = "🟢 Sudah Check-In";
@@ -1424,7 +1427,7 @@ body {
       modal1.style.visibility = "hidden";
 
       let rider = selectedRider;
-      let isHadir = isRiderHadir(rider);
+      let isHadir = String(rider.Kehadiran || '').trim().toLowerCase() === 'hadir';
       let banner = document.getElementById("modalConfirmBanner");
       
       if (isHadir) {
