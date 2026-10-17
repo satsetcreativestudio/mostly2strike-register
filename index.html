@@ -996,16 +996,17 @@ body {
       scanInput.value = "";
       handleLiveSearchDash();
 
-      // Jika QR milik peserta yang sudah hadir, langsung munculkan popup
-      // konfirmasi dengan banner DOUBLE SCAN, tanpa perlu membuka detail dulu.
+      // Jika peserta sudah hadir, langsung munculkan popup konfirmasi
+      // dengan banner DOUBLE SCAN. Jangan bergantung pada exactCodeMatch,
+      // karena sebagian scanner menambahkan spasi/baris baru pada hasil QR.
       const status = String(found.Kehadiran || '').trim().toLowerCase();
-      if (exactCodeMatch && status === 'hadir') {
+      if (status === 'hadir') {
         selectedRider = found;
         openConfirmModalFromDetail();
         return;
       }
 
-      // Alur normal peserta yang belum hadir dan pencarian manual tetap sama.
+      // Peserta yang belum hadir tetap memakai alur detail seperti biasa.
       openModal(found);
     }
 
