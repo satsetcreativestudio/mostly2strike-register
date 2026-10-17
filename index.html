@@ -910,14 +910,9 @@ body {
           return aHadir - bHadir;
         });
       } else {
-        let exactMatch = globalRidersData.find(r => String(r['Kode Registrasi']).toLowerCase() === searchTerm);
-        if (exactMatch) {
-          openModal(exactMatch);
-          searchInput.value = "";
-          handleLiveSearchDash();
-          return;
-        }
-
+        // Jangan membuka popup dari event oninput.
+        // Scanner mengisi kolom karakter demi karakter; popup harus diproses
+        // oleh handleScanEnter() setelah scanner mengirim tombol Enter.
         displayList = globalRidersData.filter(r => {
           let nama = String(r['Nama Lengkap'] || '').toLowerCase();
           let team = String(r['Team'] || '').toLowerCase();
@@ -977,13 +972,18 @@ body {
       e.preventDefault();
 
       const scanInput = document.getElementById("scanInput");
-      const val = String(scanInput.value || "").trim().toLowerCase();
+      const rawVal = String(scanInput.value || "").trim();
+      const val = rawVal.toLowerCase();
       if (!val) return;
 
-      // QR harus dicocokkan secara tepat dengan Kode Registrasi.
-      const exactCodeMatch = globalRidersData.find(r =>
-        String(r['Kode Registrasi'] || '').trim().toLowerCase() === val
-      );
+      // Normalisasi hasil scanner agar spasi/baris baru tidak menggagalkan pencocokan.
+      const normalizedVal = val.replace(/[\s\u200B-\u200D\uFEFF]/g, "");
+
+      // QR dicocokkan berdasarkan Kode Registrasi.
+      const exactCodeMatch = globalRidersData.find(r => {
+        const code = String(r['Kode Registrasi'] || '').trim().toLowerCase();
+        return code === val || code.replace(/[\s\u200B-\u200D\uFEFF]/g, "") === normalizedVal;
+      });
 
       // Nama/WhatsApp tetap memakai alur detail lama.
       const found = exactCodeMatch || globalRidersData.find(r =>
