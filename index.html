@@ -602,7 +602,7 @@ body {
   }
 }
 
-    #m2sLoginGate { position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(8,8,8,.97); }
+    #m2sLoginGate { position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(rgba(15,15,15,.93), rgba(15,15,15,.93)), url('https://i.ibb.co.com/Fb5d25FQ/Pngtree-dirt-bike-rider-kicking-up-19485875.jpg') center / cover fixed; }
     #m2sLoginCard { width:100%; max-width:420px; background:#1e1e1e; border:1px solid #454545; border-top:4px solid var(--m2s-yellow); border-radius:12px; padding:28px; box-shadow:0 18px 55px rgba(0,0,0,.6); }
     #m2sLoginCard h1 { color:var(--m2s-yellow); font-size:25px; margin-bottom:8px; }
     #m2sLoginCard p { color:var(--text-muted); font-size:13px; line-height:1.5; margin-bottom:18px; }
@@ -961,7 +961,7 @@ body {
       } else {
         let exactMatch = globalRidersData.find(r => String(r['Kode Registrasi']).toLowerCase() === searchTerm);
         if (exactMatch) {
-          openModal(exactMatch);
+          openConfirmForRider(exactMatch);
           searchInput.value = "";
           handleLiveSearchDash();
           return;
@@ -1001,6 +1001,10 @@ body {
 
     function renderRiderCard(rider, container) {
       let isHadir = String(rider.Kehadiran || '').trim().toLowerCase() === 'hadir';
+      const confirmButton = document.getElementById("btnSubmitCheckin");
+      confirmButton.disabled = isHadir;
+      confirmButton.textContent = isHadir ? "SUDAH CHECK-IN — TIDAK DAPAT DIULANG" : "🟩 SIMPAN & CHECK-IN (ENTER)";
+      confirmButton.title = isHadir ? "Peserta sudah check-in. Koreksi status melalui spreadsheet." : "";
       let card = document.createElement("div");
       card.className = "rider-card";
       if(isHadir) card.style.borderLeft = "4px solid var(--m2s-green)";
@@ -1015,7 +1019,7 @@ body {
           </div>
         </div>
         <div>
-          <button class="btn-detail" onclick='openModal(${JSON.stringify(rider)})'>DETAIL</button>
+          <button class="btn-detail" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" onclick='openConfirmForRider(${JSON.stringify(rider)})'>CHECK IN</button>
         </div>
       `;
       container.appendChild(card);
@@ -1056,7 +1060,7 @@ body {
       }
 
       // Peserta yang belum hadir tetap memakai alur detail seperti biasa.
-      openModal(found);
+      openConfirmForRider(found);
     }
 
     function renderRecentCheckins() {
@@ -1142,7 +1146,7 @@ body {
         let trR = document.createElement("tr");
         if (isHadir) trR.classList.add("hadir-row");
         trR.innerHTML = `
-          <td><button class="btn-detail" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" onclick='openModal(${JSON.stringify(rider)})'>Check-in</button></td>
+          <td><button class="btn-detail" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" onclick='openConfirmForRider(${JSON.stringify(rider)})'>CHECK IN</button></td>
           <td><strong style="color:${isHadir?'var(--m2s-green)':'var(--text-muted)'}">${isHadir ? 'HADIR' : 'BELUM'}</strong></td>
           <td>${rider['No'] || '-'}</td>
           <td>${rider['Kode Registrasi'] || '-'}</td>
@@ -1427,6 +1431,15 @@ body {
       return partners.length > 0 ? partners.map(p => p['Nama Lengkap']).join(", ") : "TIDAK ADA";
     }
 
+    function openConfirmForRider(rider) {
+      if (!rider) return;
+      const code = String(rider['Kode Registrasi'] || '').trim().toLowerCase();
+      selectedRider = globalRidersData.find(r =>
+        String(r['Kode Registrasi'] || '').trim().toLowerCase() === code
+      ) || rider;
+      openConfirmModalFromDetail();
+    }
+
     function openModal(rider) {
       selectedRider = rider;
       
@@ -1539,6 +1552,13 @@ function speakScanMessage(type, riderName) {
 
     function confirmCheckIn() {
       if (!selectedRider) return;
+      if (String(selectedRider.Kehadiran || '').trim().toLowerCase() === "hadir") {
+        const btn = document.getElementById("btnSubmitCheckin");
+        btn.disabled = true;
+        btn.textContent = "SUDAH CHECK-IN — TIDAK DAPAT DIULANG";
+        alert("Peserta sudah check-in. Jika perlu koreksi, ubah status di spreadsheet lalu muat ulang data.");
+        return;
+      }
       if (!document.getElementById("checkGelang").checked) {
         alert("Harap centang konfirmasi Gelang & ID Card!");
         return;
