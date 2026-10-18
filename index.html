@@ -622,12 +622,12 @@ body {
 <body class="m2s-locked">
   <section id="m2sLoginGate" aria-label="Login Mostly2Stroke">
     <form id="m2sLoginCard" onsubmit="event.preventDefault(); m2sLogin();">
-      <h1>MOSTLY 2STROKE</h1><p>Masuk untuk membuka dashboard rider dan fitur check-in.</p>
+      <h1>MOSTLY 2STROKE</h1><p>Login untuk mengelola data peserta dan proses check-in M2S.</p>
       <label for="m2sUsername">Username</label><input id="m2sUsername" name="username" autocomplete="username" required>
       <label for="m2sPassword">Password</label><input id="m2sPassword" name="password" type="password" autocomplete="current-password" required>
       <button id="m2sLoginButton" type="submit">LOGIN</button>
       <div id="m2sLoginMessage" role="status" aria-live="polite"></div>
-      <div id="m2sSessionLabel">Sesi login berlaku maksimal 6 jam.</div>
+      <div id="m2sSessionLabel">Akses admin aktif hingga 6 jam per sesi.</div>
     </form>
   </section>
 
@@ -1537,8 +1537,16 @@ function speakScanMessage(type, riderName) {
       document.getElementById("confirmKamar").innerText = rider['Kamar'] || "-";
       document.getElementById("confirmPartner").innerText = getPartnerSekamar(rider['Kamar'], rider['Nama Lengkap']);
       
-      document.getElementById("inputDiambilOleh").value = rider['Nama Lengkap'] || "";
-      document.getElementById("checkGelang").checked = !isHadir;
+      const takenByInput = document.getElementById("inputDiambilOleh");
+      takenByInput.value = rider['Nama Lengkap'] || "";
+      // Pada double scan, data pengambil dan checklist hanya ditampilkan, tidak dapat diubah.
+      takenByInput.disabled = isHadir;
+      takenByInput.title = isHadir ? "Data check-in hanya dapat dikoreksi oleh panitia." : "";
+
+      const braceletCheck = document.getElementById("checkGelang");
+      braceletCheck.checked = true;
+      braceletCheck.disabled = isHadir;
+      braceletCheck.title = isHadir ? "Checklist dikunci karena peserta sudah check-in." : "";
 
       const confirmButton = document.getElementById("btnSubmitCheckin");
       confirmButton.disabled = isHadir;
@@ -1564,6 +1572,9 @@ function speakScanMessage(type, riderName) {
       if (String(selectedRider.Kehadiran || '').trim().toLowerCase() === "hadir") {
         const btn = document.getElementById("btnSubmitCheckin");
         btn.disabled = true;
+        document.getElementById("inputDiambilOleh").disabled = true;
+        document.getElementById("checkGelang").checked = true;
+        document.getElementById("checkGelang").disabled = true;
         btn.innerHTML = '<span class="checkin-button-title">PESERTA SUDAH CHECK IN</span><span class="checkin-button-note">Hubungi panitia untuk perubahan</span>';
         return;
       }
