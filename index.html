@@ -1036,8 +1036,8 @@ body {
         if (rider['Timestamp']) {
           let dateObj = new Date(rider['Timestamp']);
           if (!isNaN(dateObj.getTime())) {
-            formattedDate = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-            formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            formattedDate = dateObj.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' });
+            formattedTime = dateObj.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
           } else {
             formattedDate = rider['Timestamp'].split(' ')[0] || '-';
             formattedTime = rider['Timestamp'].includes('T') ? rider['Timestamp'].split('T')[1].substring(0, 8) : rider['Timestamp'];
@@ -1057,6 +1057,36 @@ body {
         `;
         container.appendChild(item);
       });
+    }
+
+    // Format tanggal untuk tampilan Indonesia tanpa menggeser tanggal kalender.
+    function formatTanggalRider(value, includeTime = false, dateOnly = false) {
+      if (value === null || value === undefined || value === "") return "-";
+      const raw = String(value).trim();
+
+      // Tanggal lahir/tanggal daftar bersifat tanggal kalender, bukan waktu UTC.
+      if (dateOnly) {
+        const isoDate = raw.match(/^(\\d{4})-(\\d{2})-(\\d{2})(?:$|T| )/);
+        if (isoDate) return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`;
+        const dmyDate = raw.match(/^(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{4})$/);
+        if (dmyDate) return `${dmyDate[1].padStart(2, "0")}/${dmyDate[2].padStart(2, "0")}/${dmyDate[3]}`;
+      }
+
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return raw;
+      const options = {
+        timeZone: "Asia/Jakarta",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      };
+      if (includeTime) {
+        options.hour = "2-digit";
+        options.minute = "2-digit";
+        options.second = "2-digit";
+        options.hour12 = false;
+      }
+      return new Intl.DateTimeFormat("id-ID", options).format(date);
     }
 
     function renderDataRidersTable() {
@@ -1099,7 +1129,7 @@ body {
           <td>${rider['Kode Registrasi'] || '-'}</td>
           <td>${rider['Nama Lengkap'] || '-'}</td>
           <td>${rider['WhatsApp'] || '-'}</td>
-          <td>${rider['Tanggal Lahir'] || '-'}</td>
+          <td>${formatTanggalRider(rider['Tanggal Lahir'], false, true)}</td>
           <td>${rider['Kelas'] || '-'}</td>
           <td>${rider['Package'] || '-'}</td>
           <td>${rider['Team'] || '-'}</td>
@@ -1109,9 +1139,9 @@ body {
           <td>${rider['Jersey Number'] || '-'}</td>
           <td>${rider['Jersey Size'] || '-'}</td>
           <td>${rider['Status'] || '-'}</td>
-          <td>${rider['Tanggal Daftar'] || '-'}</td>
+          <td>${formatTanggalRider(rider['Tanggal Daftar'], false, true)}</td>
           <td>${rider['Kamar'] || '-'}</td>
-          <td>${rider['Timestamp'] || '-'}</td>
+          <td>${formatTanggalRider(rider['Timestamp'], true)}</td>
           <td>${rider['Diambil oleh'] || '-'}</td>
         `;
         riderTbody.appendChild(trR);
