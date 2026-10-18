@@ -1420,38 +1420,31 @@ body {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // Voice notification: menggunakan Text-to-Speech bawaan browser.
-    // Pilihan suara laki-laki dicoba berdasarkan nama voice yang tersedia di perangkat.
-    function speakScanMessage(type, riderName) {
-      if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
-        console.warn('Text-to-Speech tidak didukung browser ini.');
-        return;
-      }
+   // Voice notification menggunakan file MP3 dari repository.
+let currentScanAudio = null;
 
-      const name = String(riderName || '').trim();
-      const message = type === 'double'
-        ? `${name ? name + ', ' : ''}already checked in!`
-        : `Welcome, ${name || 'rider'}!`;
+function speakScanMessage(type, riderName) {
+  const audioFile = type === 'double'
+    ? './double-scan.mp3'
+    : './welcome-rider.mp3';
 
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = 'en-US';
-        utterance.rate = type === 'double' ? 0.92 : 0.96;
-        utterance.pitch = type === 'double' ? 0.88 : 0.96;
-        utterance.volume = 1;
-
-        const voices = window.speechSynthesis.getVoices();
-        const englishVoices = voices.filter(v => /^en(-|_)/i.test(v.lang));
-        const maleHints = /male|man|guy|david|mark|daniel|james|alex|fred|tom/i;
-        const preferred = englishVoices.find(v => maleHints.test(v.name)) || englishVoices[0];
-        if (preferred) utterance.voice = preferred;
-
-        window.speechSynthesis.speak(utterance);
-      } catch (err) {
-        console.warn('Suara notifikasi tidak dapat diputar:', err);
-      }
+  try {
+    // Hentikan suara sebelumnya jika masih berjalan.
+    if (currentScanAudio) {
+      currentScanAudio.pause();
+      currentScanAudio.currentTime = 0;
     }
+
+    currentScanAudio = new Audio(audioFile);
+    currentScanAudio.volume = 1;
+
+    currentScanAudio.play().catch(err => {
+      console.warn('Audio gagal diputar:', err);
+    });
+  } catch (err) {
+    console.warn('Audio notifikasi bermasalah:', err);
+  }
+}
 
     function openConfirmModalFromDetail() {
       if(!selectedRider) return;
