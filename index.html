@@ -180,6 +180,11 @@
       font-weight: 900; font-size: 13px; border-radius: 4px; cursor: pointer; text-transform: uppercase; margin-bottom: 8px;
     }
     .btn-popup-checkin:hover { background: #008a00; }
+    .btn-submit { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-height:58px; }
+    .btn-submit .checkin-button-title { display:block; font-weight:900; font-size:14px; line-height:1.25; }
+    .btn-submit .checkin-button-note { display:block; font-size:11px; font-weight:700; line-height:1.3; color:#d7ffd9; text-transform:none; }
+    .btn-submit:disabled { opacity:1; cursor:not-allowed; background:var(--m2s-green); color:#fff; }
+    .btn-submit:disabled .checkin-button-note { color:#ffe0e5; }
 
     /* POP-UP 2: KONFIRMASI AKHIR */
     .modal-confirm-overlay {
@@ -1001,10 +1006,6 @@ body {
 
     function renderRiderCard(rider, container) {
       let isHadir = String(rider.Kehadiran || '').trim().toLowerCase() === 'hadir';
-      const confirmButton = document.getElementById("btnSubmitCheckin");
-      confirmButton.disabled = isHadir;
-      confirmButton.textContent = isHadir ? "SUDAH CHECK-IN — TIDAK DAPAT DIULANG" : "🟩 SIMPAN & CHECK-IN (ENTER)";
-      confirmButton.title = isHadir ? "Peserta sudah check-in. Koreksi status melalui spreadsheet." : "";
       let card = document.createElement("div");
       card.className = "rider-card";
       if(isHadir) card.style.borderLeft = "4px solid var(--m2s-green)";
@@ -1537,13 +1538,21 @@ function speakScanMessage(type, riderName) {
       document.getElementById("confirmPartner").innerText = getPartnerSekamar(rider['Kamar'], rider['Nama Lengkap']);
       
       document.getElementById("inputDiambilOleh").value = rider['Nama Lengkap'] || "";
-      document.getElementById("checkGelang").checked = true;
+      document.getElementById("checkGelang").checked = !isHadir;
+
+      const confirmButton = document.getElementById("btnSubmitCheckin");
+      confirmButton.disabled = isHadir;
+      confirmButton.title = ""; // Tidak perlu tooltip; petunjuk ditampilkan di dalam tombol.
+      confirmButton.innerHTML = isHadir
+        ? '<span class="checkin-button-title">PESERTA SUDAH CHECK IN</span><span class="checkin-button-note">Hubungi panitia untuk perubahan</span>'
+        : '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Cek kembali data riders sebelum melanjutkan</span>';
+      confirmButton.setAttribute("aria-disabled", isHadir ? "true" : "false");
       
       let modal2 = document.getElementById("modalConfirmOverlay");
       modal2.style.display = "flex";
       modal2.style.visibility = "visible";
       
-      document.getElementById("btnSubmitCheckin").focus();
+      if (!isHadir) confirmButton.focus();
     }
 
     function closeConfirmModal() {
@@ -1555,8 +1564,7 @@ function speakScanMessage(type, riderName) {
       if (String(selectedRider.Kehadiran || '').trim().toLowerCase() === "hadir") {
         const btn = document.getElementById("btnSubmitCheckin");
         btn.disabled = true;
-        btn.textContent = "SUDAH CHECK-IN — TIDAK DAPAT DIULANG";
-        alert("Peserta sudah check-in. Jika perlu koreksi, ubah status di spreadsheet lalu muat ulang data.");
+        btn.innerHTML = '<span class="checkin-button-title">PESERTA SUDAH CHECK IN</span><span class="checkin-button-note">Hubungi panitia untuk perubahan</span>';
         return;
       }
       if (!document.getElementById("checkGelang").checked) {
@@ -1565,7 +1573,7 @@ function speakScanMessage(type, riderName) {
       }
 
       let btn = document.getElementById("btnSubmitCheckin");
-      btn.innerText = "MENYIMPAN...";
+      btn.innerHTML = '<span class="checkin-button-title">MENYIMPAN...</span><span class="checkin-button-note">Mohon tunggu sebentar</span>';
       btn.disabled = true;
 
       let payload = {
@@ -1577,12 +1585,12 @@ function speakScanMessage(type, riderName) {
       };
 
       if (!m2sToken) {
-        btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)"; btn.disabled = false;
+        btn.innerHTML = '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Cek kembali data riders sebelum melanjutkan</span>'; btn.disabled = false;
         m2sLogout("Sesi berakhir. Silakan login kembali."); return;
       }
       payload.token = m2sToken;
       m2sRequest(payload).then(res => {
-        btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)"; btn.disabled = false;
+        btn.innerHTML = '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Cek kembali data riders sebelum melanjutkan</span>'; btn.disabled = false;
         if (res.code === "UNAUTHORIZED") { m2sLogout(res.message); }
         else if (res.status === "success") {
           speakScanMessage('success', selectedRider['Nama Lengkap']); closeConfirmModal(); fetchData();
