@@ -889,7 +889,7 @@ body {
       if (oldToken) m2sRequest({ action:"logout", token:oldToken }).catch(() => {});
     }
 
-    async async function fetchData() {
+    async function fetchData() {
       if (!m2sToken) return;
       try {
         const data = await m2sRequest({ action:"getData", token:m2sToken });
@@ -914,7 +914,7 @@ body {
       setInterval(updateClock, 1000);
     }
 
-    async     function switchTab(tabName, element) {
+    function switchTab(tabName, element) {
       if (tabName === 'keluar') {
         if (confirm("Apakah Anda yakin ingin keluar dari sistem dashboard?")) {
           m2sLogout("Kamu sudah logout. Silakan login kembali.");
