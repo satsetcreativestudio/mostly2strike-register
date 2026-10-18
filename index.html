@@ -622,12 +622,12 @@ body {
 <body class="m2s-locked">
   <section id="m2sLoginGate" aria-label="Login Mostly2Stroke">
     <form id="m2sLoginCard" onsubmit="event.preventDefault(); m2sLogin();">
-      <h1>MOSTLY 2STROKE</h1><p>Login untuk mengelola data peserta dan proses check-in M2S.</p>
+      <h1>MOSTLY 2STROKE</h1><p>Login panel registrasi Mostly 2Stroke</p>
       <label for="m2sUsername">Username</label><input id="m2sUsername" name="username" autocomplete="username" required>
       <label for="m2sPassword">Password</label><input id="m2sPassword" name="password" type="password" autocomplete="current-password" required>
       <button id="m2sLoginButton" type="submit">LOGIN</button>
       <div id="m2sLoginMessage" role="status" aria-live="polite"></div>
-      <div id="m2sSessionLabel">Akses admin aktif hingga 6 jam per sesi.</div>
+      <div id="m2sSessionLabel">Hubungi panitia untuk mendapatkan akses</div>
     </form>
   </section>
 
@@ -1552,8 +1552,8 @@ function speakScanMessage(type, riderName) {
       confirmButton.disabled = isHadir;
       confirmButton.title = ""; // Tidak perlu tooltip; petunjuk ditampilkan di dalam tombol.
       confirmButton.innerHTML = isHadir
-        ? '<span class="checkin-button-title">PESERTA SUDAH CHECK IN</span><span class="checkin-button-note">Hubungi panitia untuk perubahan</span>'
-        : '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Cek kembali data riders sebelum melanjutkan</span>';
+        ? '<span class="checkin-button-title">PESERTA SUDAH CHECK IN</span><span class="checkin-button-note">Hubungi panitia untuk mengubah status</span>'
+        : '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Periksa kembali data peserta</span>';
       confirmButton.setAttribute("aria-disabled", isHadir ? "true" : "false");
       
       let modal2 = document.getElementById("modalConfirmOverlay");
@@ -1575,7 +1575,7 @@ function speakScanMessage(type, riderName) {
         document.getElementById("inputDiambilOleh").disabled = true;
         document.getElementById("checkGelang").checked = true;
         document.getElementById("checkGelang").disabled = true;
-        btn.innerHTML = '<span class="checkin-button-title">PESERTA SUDAH CHECK IN</span><span class="checkin-button-note">Hubungi panitia untuk perubahan</span>';
+        btn.innerHTML = '<span class="checkin-button-title">PESERTA SUDAH CHECK IN</span><span class="checkin-button-note">Hubungi panitia untuk mengubah status</span>';
         return;
       }
       if (!document.getElementById("checkGelang").checked) {
@@ -1596,12 +1596,12 @@ function speakScanMessage(type, riderName) {
       };
 
       if (!m2sToken) {
-        btn.innerHTML = '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Cek kembali data riders sebelum melanjutkan</span>'; btn.disabled = false;
+        btn.innerHTML = '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Periksa kembali data peserta</span>'; btn.disabled = false;
         m2sLogout("Sesi berakhir. Silakan login kembali."); return;
       }
       payload.token = m2sToken;
       m2sRequest(payload).then(res => {
-        btn.innerHTML = '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Cek kembali data riders sebelum melanjutkan</span>'; btn.disabled = false;
+        btn.innerHTML = '<span class="checkin-button-title">KONFIRMASI CHECK IN</span><span class="checkin-button-note">Periksa kembali data peserta</span>'; btn.disabled = false;
         if (res.code === "UNAUTHORIZED") { m2sLogout(res.message); }
         else if (res.status === "success") {
           speakScanMessage('success', selectedRider['Nama Lengkap']); closeConfirmModal(); fetchData();
