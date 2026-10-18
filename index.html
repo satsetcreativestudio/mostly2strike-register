@@ -889,7 +889,7 @@ body {
       if (oldToken) m2sRequest({ action:"logout", token:oldToken }).catch(() => {});
     }
 
-    async function fetchData() {
+    async async function fetchData() {
       if (!m2sToken) return;
       try {
         const data = await m2sRequest({ action:"getData", token:m2sToken });
@@ -914,19 +914,7 @@ body {
       setInterval(updateClock, 1000);
     }
 
-    async function fetchData() {
-      if (!m2sToken) return;
-      try {
-        const data = await m2sRequest({ action:"getData", token:m2sToken });
-        if (data.code === "UNAUTHORIZED") { m2sLogout(data.message); return; }
-        if (data.status === "success") {
-          globalRidersData = data.data;
-          updateStats(); handleLiveSearchDash(); renderDataRidersTable(); renderRecentCheckins(); renderRoomGrid(); renderCetakList();
-        } else { alert(data.message || "Gagal mengambil data rider."); }
-      } catch (error) { alert("Gagal mengambil data. Periksa koneksi dan deployment backend."); }
-    }
-
-    function switchTab(tabName, element) {
+    async     function switchTab(tabName, element) {
       if (tabName === 'keluar') {
         if (confirm("Apakah Anda yakin ingin keluar dari sistem dashboard?")) {
           m2sLogout("Kamu sudah logout. Silakan login kembali.");
