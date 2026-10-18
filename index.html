@@ -601,9 +601,30 @@ body {
     padding: 10px;
   }
 }
+
+    #m2sLoginGate { position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(rgba(15,15,15,.93), rgba(15,15,15,.93)), url('https://i.ibb.co.com/Fb5d25FQ/Pngtree-dirt-bike-rider-kicking-up-19485875.jpg') center / cover fixed; }
+    #m2sLoginCard { width:100%; max-width:420px; background:#1e1e1e; border:1px solid #454545; border-top:4px solid var(--m2s-yellow); border-radius:12px; padding:28px; box-shadow:0 18px 55px rgba(0,0,0,.6); }
+    #m2sLoginCard h1 { color:var(--m2s-yellow); font-size:25px; margin-bottom:8px; }
+    #m2sLoginCard p { color:var(--text-muted); font-size:13px; line-height:1.5; margin-bottom:18px; }
+    #m2sLoginCard label { display:block; font-size:12px; color:#ddd; margin:12px 0 6px; font-weight:700; }
+    #m2sLoginCard input { width:100%; padding:12px; border-radius:6px; border:1px solid #555; background:#111; color:#fff; }
+    #m2sLoginButton { width:100%; margin-top:18px; padding:13px; border:0; border-radius:6px; background:var(--m2s-yellow); color:#111; font-weight:900; cursor:pointer; }
+    #m2sLoginMessage { min-height:18px; margin-top:12px; font-size:12px; color:#ff7474; }
+    #m2sSessionLabel { font-size:11px; color:var(--text-muted); margin-top:8px; }
+    body.m2s-locked > *:not(#m2sLoginGate) { visibility:hidden; }
   </style>
 </head>
-<body>
+<body class="m2s-locked">
+  <section id="m2sLoginGate" aria-label="Login Mostly2Stroke">
+    <form id="m2sLoginCard" onsubmit="event.preventDefault(); m2sLogin();">
+      <h1>MOSTLY 2STROKE</h1><p>Masuk untuk membuka dashboard rider dan fitur check-in.</p>
+      <label for="m2sUsername">Username</label><input id="m2sUsername" name="username" autocomplete="username" required>
+      <label for="m2sPassword">Password</label><input id="m2sPassword" name="password" type="password" autocomplete="current-password" required>
+      <button id="m2sLoginButton" type="submit">LOGIN</button>
+      <div id="m2sLoginMessage" role="status" aria-live="polite"></div>
+      <div id="m2sSessionLabel">Sesi login berlaku maksimal 6 jam.</div>
+    </form>
+  </section>
 
   <!-- Sidebar Navigasi -->
   <div class="sidebar">
@@ -830,11 +851,55 @@ body {
 
     let globalRidersData = [];
     let selectedRider = null;
+    let m2sToken = "";
 
-    window.onload = function() { 
-      fetchData(); 
-      initRealtimeClock(); 
+    window.onload = function() {
+      initRealtimeClock();
+      document.body.classList.add("m2s-locked");
+      document.getElementById("m2sLoginGate").style.display = "flex";
     };
+
+    async function m2sRequest(payload) {
+      const response = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+      return response.json();
+    }
+
+    async function m2sLogin() {
+      const button = document.getElementById("m2sLoginButton");
+      const message = document.getElementById("m2sLoginMessage");
+      button.disabled = true; button.textContent = "MEMERIKSA..."; message.textContent = "";
+      try {
+        const result = await m2sRequest({ action:"login", username:document.getElementById("m2sUsername").value, password:document.getElementById("m2sPassword").value });
+        document.getElementById("m2sPassword").value = "";
+        if (result.status !== "success" || !result.token) { message.textContent = result.message || "Login gagal."; return; }
+        m2sToken = result.token;
+        document.body.classList.remove("m2s-locked");
+        document.getElementById("m2sLoginGate").style.display = "none";
+        await fetchData();
+      } catch (error) {
+        message.textContent = "Tidak bisa terhubung. Pastikan backend sudah diperbarui dan deployment aktif.";
+      } finally { button.disabled = false; button.textContent = "LOGIN"; }
+    }
+
+    function m2sLogout(message) {
+      const oldToken = m2sToken; m2sToken = ""; globalRidersData = [];
+      document.body.classList.add("m2s-locked");
+      document.getElementById("m2sLoginGate").style.display = "flex";
+      document.getElementById("m2sLoginMessage").textContent = message || "Silakan login kembali.";
+      if (oldToken) m2sRequest({ action:"logout", token:oldToken }).catch(() => {});
+    }
+
+    async function fetchData() {
+      if (!m2sToken) return;
+      try {
+        const data = await m2sRequest({ action:"getData", token:m2sToken });
+        if (data.code === "UNAUTHORIZED") { m2sLogout(data.message); return; }
+        if (data.status === "success") {
+          globalRidersData = data.data;
+          updateStats(); handleLiveSearchDash(); renderDataRidersTable(); renderRecentCheckins(); renderRoomGrid(); renderCetakList();
+        } else { alert(data.message || "Gagal mengambil data rider."); }
+      } catch (error) { alert("Gagal mengambil data. Periksa koneksi dan deployment backend."); }
+    }
 
     function initRealtimeClock() {
       const updateClock = () => {
@@ -849,26 +914,10 @@ body {
       setInterval(updateClock, 1000);
     }
 
-    function fetchData() {
-      fetch(GAS_API_URL + "?action=getData")
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === "success") {
-            globalRidersData = data.data;
-            updateStats();
-            handleLiveSearchDash();
-            renderDataRidersTable();
-            renderRecentCheckins();
-            renderRoomGrid();
-            renderCetakList();
-          }
-        });
-    }
-
     function switchTab(tabName, element) {
       if (tabName === 'keluar') {
         if (confirm("Apakah Anda yakin ingin keluar dari sistem dashboard?")) {
-          window.location.reload();
+          m2sLogout("Kamu sudah logout. Silakan login kembali.");
         }
         return;
       }
@@ -912,7 +961,7 @@ body {
       } else {
         let exactMatch = globalRidersData.find(r => String(r['Kode Registrasi']).toLowerCase() === searchTerm);
         if (exactMatch) {
-          openModal(exactMatch);
+          openConfirmForRider(exactMatch);
           searchInput.value = "";
           handleLiveSearchDash();
           return;
@@ -952,6 +1001,10 @@ body {
 
     function renderRiderCard(rider, container) {
       let isHadir = String(rider.Kehadiran || '').trim().toLowerCase() === 'hadir';
+      const confirmButton = document.getElementById("btnSubmitCheckin");
+      confirmButton.disabled = isHadir;
+      confirmButton.textContent = isHadir ? "SUDAH CHECK-IN — TIDAK DAPAT DIULANG" : "🟩 SIMPAN & CHECK-IN (ENTER)";
+      confirmButton.title = isHadir ? "Peserta sudah check-in. Koreksi status melalui spreadsheet." : "";
       let card = document.createElement("div");
       card.className = "rider-card";
       if(isHadir) card.style.borderLeft = "4px solid var(--m2s-green)";
@@ -966,7 +1019,7 @@ body {
           </div>
         </div>
         <div>
-          <button class="btn-detail" onclick='openModal(${JSON.stringify(rider)})'>DETAIL</button>
+          <button class="btn-detail" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" onclick='openConfirmForRider(${JSON.stringify(rider)})'>CHECK IN</button>
         </div>
       `;
       container.appendChild(card);
@@ -1007,7 +1060,7 @@ body {
       }
 
       // Peserta yang belum hadir tetap memakai alur detail seperti biasa.
-      openModal(found);
+      openConfirmForRider(found);
     }
 
     function renderRecentCheckins() {
@@ -1093,7 +1146,7 @@ body {
         let trR = document.createElement("tr");
         if (isHadir) trR.classList.add("hadir-row");
         trR.innerHTML = `
-          <td><button class="btn-detail" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" onclick='openModal(${JSON.stringify(rider)})'>Check-in</button></td>
+          <td><button class="btn-detail" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" style="padding: 6px 12px; background:var(--m2s-yellow); color:black; border:none;" onclick='openConfirmForRider(${JSON.stringify(rider)})'>CHECK IN</button></td>
           <td><strong style="color:${isHadir?'var(--m2s-green)':'var(--text-muted)'}">${isHadir ? 'HADIR' : 'BELUM'}</strong></td>
           <td>${rider['No'] || '-'}</td>
           <td>${rider['Kode Registrasi'] || '-'}</td>
@@ -1378,6 +1431,15 @@ body {
       return partners.length > 0 ? partners.map(p => p['Nama Lengkap']).join(", ") : "TIDAK ADA";
     }
 
+    function openConfirmForRider(rider) {
+      if (!rider) return;
+      const code = String(rider['Kode Registrasi'] || '').trim().toLowerCase();
+      selectedRider = globalRidersData.find(r =>
+        String(r['Kode Registrasi'] || '').trim().toLowerCase() === code
+      ) || rider;
+      openConfirmModalFromDetail();
+    }
+
     function openModal(rider) {
       selectedRider = rider;
       
@@ -1490,6 +1552,13 @@ function speakScanMessage(type, riderName) {
 
     function confirmCheckIn() {
       if (!selectedRider) return;
+      if (String(selectedRider.Kehadiran || '').trim().toLowerCase() === "hadir") {
+        const btn = document.getElementById("btnSubmitCheckin");
+        btn.disabled = true;
+        btn.textContent = "SUDAH CHECK-IN — TIDAK DAPAT DIULANG";
+        alert("Peserta sudah check-in. Jika perlu koreksi, ubah status di spreadsheet lalu muat ulang data.");
+        return;
+      }
       if (!document.getElementById("checkGelang").checked) {
         alert("Harap centang konfirmasi Gelang & ID Card!");
         return;
@@ -1507,21 +1576,20 @@ function speakScanMessage(type, riderName) {
         diambilOleh: document.getElementById("inputDiambilOleh").value
       };
 
-      fetch(GAS_API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(res => {
-        btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)";
-        btn.disabled = false;
-        if (res.status === "success") {
-          speakScanMessage('success', selectedRider['Nama Lengkap']);
-          closeConfirmModal();
-          fetchData(); 
-        } else {
-          alert("Error: " + res.message);
-        }
+      if (!m2sToken) {
+        btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)"; btn.disabled = false;
+        m2sLogout("Sesi berakhir. Silakan login kembali."); return;
+      }
+      payload.token = m2sToken;
+      m2sRequest(payload).then(res => {
+        btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)"; btn.disabled = false;
+        if (res.code === "UNAUTHORIZED") { m2sLogout(res.message); }
+        else if (res.status === "success") {
+          speakScanMessage('success', selectedRider['Nama Lengkap']); closeConfirmModal(); fetchData();
+        } else { alert("Error: " + res.message); }
+      }).catch(() => {
+        btn.innerText = "🟩 SIMPAN & CHECK-IN (ENTER)"; btn.disabled = false;
+        alert("Check-in gagal terhubung ke server. Silakan coba lagi.");
       });
     }
 
