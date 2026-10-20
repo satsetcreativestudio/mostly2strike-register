@@ -866,17 +866,21 @@ body {
     window.onload = function() {
       initRealtimeClock();
       document.body.classList.add("m2s-locked");
-      document.getElementById("m2sLoginGate").style.display = "flex";
 
-      // Pulihkan sesi setelah refresh/reopen browser, selama token server masih berlaku.
+      // Jangan tampilkan form login sebelum sesi tersimpan selesai diperiksa.
+      const loginGate = document.getElementById("m2sLoginGate");
+      loginGate.style.display = "none";
       const savedToken = localStorage.getItem(M2S_SESSION_TOKEN_KEY);
       const savedExpiry = Number(localStorage.getItem(M2S_SESSION_EXPIRY_KEY) || 0);
+
       if (savedToken && savedExpiry > Date.now()) {
         m2sToken = savedToken;
-        document.getElementById("m2sLoginMessage").textContent = "Memulihkan sesi...";
+        document.getElementById("m2sLoginMessage").textContent = "";
         fetchData();
       } else {
         clearSavedM2SSession();
+        document.body.classList.remove("m2s-locked");
+        loginGate.style.display = "flex";
       }
     };
 
