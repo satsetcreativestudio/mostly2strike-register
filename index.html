@@ -929,6 +929,9 @@ body {
         const data = await m2sRequest({ action:"getData", token:m2sToken });
         if (data.code === "UNAUTHORIZED") { m2sLogout(data.message); return; }
         if (data.status === "success") {
+          document.body.classList.remove("m2s-locked");
+          document.getElementById("m2sLoginGate").style.display = "none";
+          document.getElementById("m2sLoginMessage").textContent = "";
           globalRidersData = data.data;
           updateStats(); handleLiveSearchDash(); renderDataRidersTable(); renderRecentCheckins(); renderRoomGrid(); renderCetakList();
         } else { alert(data.message || "Gagal mengambil data rider."); }
