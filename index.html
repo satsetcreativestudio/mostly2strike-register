@@ -94,16 +94,16 @@
     }
     .filter-select:focus { border-color: var(--m2s-yellow); }
 
-    .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .dash-grid { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr); gap: 20px; }
     .scrollable-list { max-height: 65vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
     .scrollable-list::-webkit-scrollbar { width: 6px; }
     .scrollable-list::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
     .scrollable-list::-webkit-scrollbar-track { background: #222; }
 
     .rider-card {
-      background: #1a1c1e; border: 1px solid #333; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+      background: #1a1c1e; border: 1px solid #333; border-radius: 8px; padding: 15px; min-height: 90px; box-sizing: border-box; display: flex; gap: 16px; justify-content: space-between; align-items: center; transition: 0.2s;
     }
-    .rider-card:hover { border-color: #555; }
+    .rider-card > div:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }\n    .rider-card > div:last-child { flex: 0 0 auto; }\n    .rider-card:hover { border-color: #555; }
     
     /* Panel Live History */
     .recent-panel { background: #151618; border: 1px solid #333; border-radius: 8px; padding: 15px; height: calc(65vh + 15px); display: flex; flex-direction: column; }
