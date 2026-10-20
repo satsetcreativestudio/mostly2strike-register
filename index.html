@@ -20,7 +20,7 @@
     :root {
       --bg-dark: #121212;
       --card-bg: #1e1e1e;
-      --m2s-yellow: #e5ff00;
+      --m2s-yellow: #8bdcff; /* aksen biru muda Mostly2stroke */
       --m2s-green: #28a745;
       --m2s-red: #ff1744;
       --text-main: #ffffff;
@@ -46,7 +46,7 @@
     .nav-item {
       padding: 12px 15px; border-radius: 6px; margin-bottom: 5px; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 12px; transition: 0.2s;
     }
-    .nav-item:hover, .nav-item.active { background-color: rgba(229, 255, 0, 0.1); color: var(--m2s-yellow); border-left: 4px solid var(--m2s-yellow); }
+    .nav-item:hover, .nav-item.active { background-color: rgba(139, 220, 255, 0.12); color: var(--m2s-yellow); border-left: 4px solid var(--m2s-yellow); }
 
     /* Kelas untuk menyembunyikan menu yang belum dibutuhkan */
     .menu-hidden { display: none !important; }
@@ -860,12 +860,36 @@ body {
     let globalRidersData = [];
     let selectedRider = null;
     let m2sToken = "";
+    const M2S_SESSION_TOKEN_KEY = "m2s_session_token";
+    const M2S_SESSION_EXPIRY_KEY = "m2s_session_expiry";
 
     window.onload = function() {
       initRealtimeClock();
       document.body.classList.add("m2s-locked");
       document.getElementById("m2sLoginGate").style.display = "flex";
+
+      // Pulihkan sesi setelah refresh/reopen browser, selama token server masih berlaku.
+      const savedToken = localStorage.getItem(M2S_SESSION_TOKEN_KEY);
+      const savedExpiry = Number(localStorage.getItem(M2S_SESSION_EXPIRY_KEY) || 0);
+      if (savedToken && savedExpiry > Date.now()) {
+        m2sToken = savedToken;
+        document.getElementById("m2sLoginMessage").textContent = "Memulihkan sesi...";
+        fetchData();
+      } else {
+        clearSavedM2SSession();
+      }
     };
+
+    function saveM2SSession(token, expiresInSeconds) {
+      const ttl = Math.max(60, Number(expiresInSeconds) || 21600);
+      localStorage.setItem(M2S_SESSION_TOKEN_KEY, token);
+      localStorage.setItem(M2S_SESSION_EXPIRY_KEY, String(Date.now() + ttl * 1000));
+    }
+
+    function clearSavedM2SSession() {
+      localStorage.removeItem(M2S_SESSION_TOKEN_KEY);
+      localStorage.removeItem(M2S_SESSION_EXPIRY_KEY);
+    }
 
     async function m2sRequest(payload) {
       const response = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
@@ -881,6 +905,7 @@ body {
         document.getElementById("m2sPassword").value = "";
         if (result.status !== "success" || !result.token) { message.textContent = result.message || "Login gagal."; return; }
         m2sToken = result.token;
+        saveM2SSession(result.token, result.expiresIn);
         document.body.classList.remove("m2s-locked");
         document.getElementById("m2sLoginGate").style.display = "none";
         await fetchData();
@@ -891,6 +916,7 @@ body {
 
     function m2sLogout(message) {
       const oldToken = m2sToken; m2sToken = ""; globalRidersData = [];
+      clearSavedM2SSession();
       document.body.classList.add("m2s-locked");
       document.getElementById("m2sLoginGate").style.display = "flex";
       document.getElementById("m2sLoginMessage").textContent = message || "Silakan login kembali.";
