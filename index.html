@@ -80,6 +80,12 @@
 
     .page-section { display: none; }
     .page-section.active { display: block; }
+    .doorprize-section { padding: 0; min-height: calc(100vh - 115px); overflow: hidden; }
+    .doorprize-frame { display: block; width: 100%; height: calc(100vh - 115px); min-height: 620px; border: 0; background: transparent; border-radius: 12px; }
+    @media (max-width: 768px) {
+      .doorprize-section { min-height: calc(100vh - 150px); }
+      .doorprize-frame { height: calc(100vh - 150px); min-height: 650px; }
+    }
 
     .search-box {
       width: 100%; padding: 14px 20px; background: rgba(30,30,30,0.9); border: 1px solid #444; border-radius: 8px; color: white; font-size: 15px; margin-bottom: 15px;
@@ -644,7 +650,7 @@ body {
       <li class="nav-item menu-hidden" onclick="switchTab('scrut', this)">🏍️ Scrutineering</li>
       <li class="nav-item menu-hidden" onclick="switchTab('merch', this)">🎁 Merchandise</li>
       <li class="nav-item" onclick="switchTab('cetak', this)">🖨️ Cetak ID & QR</li>
-      <li class="nav-item" onclick="window.open('https://script.google.com/macros/s/AKfycbxiE9o3QvOs_1UmFdOW2l547WeywNetaztoc0yiQ3poK0ZxDBuAgiEhTjaS38XzGpJUpg/exec', '_blank', 'noopener,noreferrer')">🎉 Doorprize</li>
+      <li class="nav-item" onclick="switchTab('doorprize', this)">🎁 Doorprize</li>
       <li class="nav-item menu-hidden" onclick="switchTab('stats', this)">📈 Laporan & Statistik</li>
       <li class="nav-item menu-hidden" onclick="switchTab('pengaturan', this)">⚙️ Pengaturan</li>
       <li class="nav-item" onclick="switchTab('keluar', this)">🚪 Keluar</li>
@@ -782,6 +788,19 @@ body {
       <div class="scrollable-list" id="cetakContainer" style="max-height: 65vh;">
         <div style="color: #666; text-align: center; padding: 20px;">Memuat Data Kartu ID...</div>
       </div>
+    </div>
+
+    <!-- TAB: DOORPRIZE -->
+    <div id="tab-doorprize" class="page-section doorprize-section">
+      <iframe
+        id="doorprizeFrame"
+        class="doorprize-frame"
+        title="Doorprize"
+        src="https://script.google.com/macros/s/AKfycbxiE9o3QvOs_1UmFdOW2l547WeywNetaztoc0yiQ3poK0ZxDBuAgiEhTjaS38XzGpJUpg/exec?embedded=1"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="fullscreen">
+      </iframe>
     </div>
 
     <!-- TAB: LAPORAN & STATISTIK (Disembunyikan) -->
@@ -970,7 +989,7 @@ body {
       if (element) element.classList.add('active');
 
       const titles = {
-        'dashboard': 'REGISTRATION DASHBOARD', 'riders': 'DATA RIDERS (MASTER DATA)',
+        'dashboard': 'REGISTRATION DASHBOARD', 'doorprize': 'DOORPRIZE', 'riders': 'DATA RIDERS (MASTER DATA)',
         'kamar': 'STATUS KAMAR (GRID)', 'cetak': 'CETAK ID & QR'
       };
       document.getElementById('pageTitle').innerText = titles[tabName] || 'DASHBOARD';
