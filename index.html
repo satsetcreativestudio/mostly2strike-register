@@ -792,21 +792,15 @@ body {
 
     <!-- TAB: DOORPRIZE -->
     <div id="tab-doorprize" class="page-section doorprize-section">
-      <div style="max-width: 760px; margin: 32px auto; padding: 28px; text-align: center; background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e5e7eb); border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.06);">
-        <div style="font-size: 42px; margin-bottom: 12px;" aria-hidden="true">🎁</div>
-        <h2 style="margin: 0 0 10px; color: var(--text-color, #172033);">Doorprize</h2>
-        <p style="margin: 0 auto 22px; max-width: 540px; line-height: 1.6; color: var(--muted-text, #64748b);">
-          Doorprize dibuka di tab baru agar tetap bisa digunakan saat browser memblokir tampilan Google Apps Script di dalam halaman registrasi.
-        </p>
-        <button type="button"
-          onclick="window.open('https://script.google.com/macros/s/AKfycbxiE9o3QvOs_1UmFdOW2l547WeywNetaztoc0yiQ3poK0ZxDBuAgiEhTjaS38XzGpJUpg/exec', '_blank', 'noopener,noreferrer')"
-          style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 12px 22px; border: 0; border-radius: 10px; background: var(--primary-color, #2563eb); color: #fff; font: inherit; font-weight: 600; cursor: pointer;">
-          Buka Aplikasi Doorprize ↗
-        </button>
-        <p style="margin: 16px 0 0; font-size: 12px; color: var(--muted-text, #64748b);">
-          Membuka aplikasi tidak menjalankan undian secara otomatis.
-        </p>
-      </div>
+      <iframe
+        id="doorprizeFrame"
+        class="doorprize-frame"
+        title="Doorprize"
+        src="https://script.google.com/macros/s/AKfycbxiE9o3QvOs_1UmFdOW2l547WeywNetaztoc0yiQ3poK0ZxDBuAgiEhTjaS38XzGpJUpg/exec?embedded=1"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="fullscreen">
+      </iframe>
     </div>
 
     <!-- TAB: LAPORAN & STATISTIK (Disembunyikan) -->
